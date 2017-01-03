@@ -14,7 +14,7 @@ public class GridNode {
 	public GridNode(int x, int y, boolean traversable){
 		this.x = x;
 		this.y = y;
-		traversable = this.traversable;
+		this.traversable = traversable;
 	}
 	
 	public String toString(){

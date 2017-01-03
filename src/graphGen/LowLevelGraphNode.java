@@ -1,11 +1,16 @@
 package graphGen;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import mapEditor.GridNode;
 
-public class LowLevelGraphNode extends GridNode{
+public class LowLevelGraphNode extends GridNode implements Serializable{
+	/**
+	 * s
+	 */
+	private static final long serialVersionUID = 6554514388231226491L;
 	private double gScore = Integer.MAX_VALUE;
 	private double hScore = Integer.MAX_VALUE;
 	private double fScore = Integer.MAX_VALUE;
@@ -16,6 +21,10 @@ public class LowLevelGraphNode extends GridNode{
 	
 	public LowLevelGraphNode(int x, int y) {
 		super(x, y);
+	}
+	
+	public LowLevelGraphNode(GridNode gridNode){
+		super(gridNode.getX(), gridNode.getY(), gridNode.isTraversable());
 	}
 	
 	public int getNumberOfTraversableNeighbors() {

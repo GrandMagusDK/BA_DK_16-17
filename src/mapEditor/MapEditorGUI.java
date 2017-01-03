@@ -1,6 +1,9 @@
 package mapEditor;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -9,7 +12,9 @@ import java.util.regex.Pattern;
 
 import graphGen.LowLevelGraph;
 import graphGen.LowLevelGraphNode;
+import gui.SimulationGUI;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -68,7 +73,7 @@ public class MapEditorGUI extends Application {
 								squareSize = 20;
 							if(sizeY >= 60)
 								squareSize = 10;
-							grid = generateGridNodes(sizeX, sizeY);
+							grid = generateGridNodes(sizeX, sizeY, true);
 							buildGridScene(primaryStage, grid);
 						}
 					}
@@ -107,8 +112,9 @@ public class MapEditorGUI extends Application {
 			
 			@Override
 			public void handle(ActionEvent event) {
-				LowLevelGraph lowGraph = new LowLevelGraph((LowLevelGraphNode[][]) grid);
+				LowLevelGraph lowGraph = new LowLevelGraph(grid);
 			}
+			//TODO
 		});
 
 		GridPane layout = new GridPane();
@@ -184,7 +190,7 @@ public class MapEditorGUI extends Application {
 				String s = fileNameField.getText();
 				if (s != "" || s != "File Name") {
 					fileName = fileNameField.getText();
-					saveToFile(fileName+".txt", saveCustomGridNoneTraversable());
+					saveToFile(fileName+".txt", saveCustomGrid(true));
 				} else {
 					showErrorAlert("Enter Filename");
 					return;
@@ -231,7 +237,28 @@ public class MapEditorGUI extends Application {
 
 			@Override
 			public void handle(ActionEvent event) {
-				//TODO
+				LowLevelGraph graph = new LowLevelGraph(grid);
+				try {
+					FileOutputStream fileOut = new FileOutputStream("tempgraph.tmp");
+					ObjectOutputStream out = new ObjectOutputStream(fileOut);
+					out.writeObject(graph);
+					out.close();
+					fileOut.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				//TODO Seemingly works final test needs deserialization. Also move to Save Function in SimGUI, not needed here.
+				Platform.runLater(new Runnable() { //Opening MapEditorGUI class
+					public void run() {
+						try {
+							new SimulationGUI().start(new Stage(), graph);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				});
 			}
 		});
 		
@@ -252,30 +279,34 @@ public class MapEditorGUI extends Application {
 		primaryStage.setScene(scene);
 	}
 
-	public GridNode[][] generateGridNodes(int x, int y) {
+	public GridNode[][] generateGridNodes(int x, int y, boolean createEmpty) {
 		GridNode[][] grid = new GridNode[x][y];
 		for (int i = 0; i < x; i++) {
 			for (int j = 0; j < y; j++) {
-				grid[i][j] = new GridNode(i, j);
+				grid[i][j] = new GridNode(i, j, createEmpty);
 			}
 		}
 		return grid;
 	}
 
-	void saveCustomGridALL() {
+	byte[] saveCustomGrid(boolean traversable) {
 		Character lineEnd = '\n';
 		StringBuilder builder = new StringBuilder();
 		builder.append(fileName + lineEnd);
 		builder.append("Size:" + lineEnd);
-		builder.append(sizeX + lineEnd);
-		builder.append(sizeY + lineEnd);
+		builder.append(String.valueOf(sizeX) + lineEnd);
+		builder.append(String.valueOf(sizeY) + lineEnd);
 		builder.append("Body:" + lineEnd);
 		for (int i = 0; i < sizeX; i++) {
 			for (int j = 0; j < sizeY; j++) {
-				builder.append(grid[i][j].toString());
+				if (grid[i][j].isTraversable() == traversable) {
+					builder.append(grid[i][j].getX() + " " + grid[i][j].getY() + lineEnd);
+				}
 			}
 		}
-		System.out.println(builder.toString());
+		builder.append("END");
+		String saveData = builder.toString();
+		return saveData.getBytes(Charset.forName("UTF-8"));
 	}
 
 	byte[] saveCustomGridNoneTraversable() {
@@ -297,9 +328,6 @@ public class MapEditorGUI extends Application {
 		builder.append("END");
 		String saveData = builder.toString();
 		return saveData.getBytes(Charset.forName("UTF-8"));
-		/*if(!saveToFile(fileName+".txt", saveData.getBytes(Charset.forName("UTF-8")))){
-			System.out.println("Write Error!");
-		}*/
 	}
 	
 	
@@ -335,12 +363,14 @@ public class MapEditorGUI extends Application {
 			if(data.get(4).contains("Body")){
 				int counter = 0;
 				String[] buffer;
-				grid = generateGridNodes(sizeX,sizeY);
+				grid = generateGridNodes(sizeX,sizeY, false);
+				if(grid[0][0].isTraversable())
+					System.out.println("Grid Empty");
 				while(!(data.get(counter+5).contains("END"))){
 					buffer = data.get(counter+5).split(" ");
 					if(Pattern.matches("[0-9]+", buffer[0]) && Pattern.matches("[0-9]+", buffer[1])){
-						//set all parsed coordinates intraversable.
-						grid[Integer.parseInt(buffer[0])][Integer.parseInt(buffer[1])].setTraversable(false);
+						//set all parsed coordinates traversable.
+						grid[Integer.parseInt(buffer[0])][Integer.parseInt(buffer[1])].setTraversable(true);
 					}
 					counter++;
 				}
@@ -377,10 +407,8 @@ public class MapEditorGUI extends Application {
 	}
 	
 	List<String> loadFromFile(String filename){
-		//byte[] data;
 		List<String> data;
 		try {
-			//data = Files.readAllBytes(Paths.get(filename));
 			data = Files.readAllLines(Paths.get(filename));
 		} catch (IOException e) {
 			e.printStackTrace();

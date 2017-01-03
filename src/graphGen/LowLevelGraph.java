@@ -1,24 +1,43 @@
 package graphGen;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LowLevelGraph {
+import mapEditor.GridNode;
+
+public class LowLevelGraph implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6307365074491949253L;
+
 	int sizeX, sizeY;
 	
 	private LowLevelGraphNode[][] lowLevelGraph;
 	private LowLevelGraphNode[][] locatedGraph;
+	
+	List<LowLevelGraphNode> intersections;
 
 	public LowLevelGraph(int sizeX, int sizeY) {
 		this.sizeX = sizeX;
 		this.sizeY = sizeY;
 		this.lowLevelGraph = generateLowLevelGraphNodes(sizeX, sizeY);
+		makeLocatedGraph();
 	}
 	
-	public LowLevelGraph(LowLevelGraphNode[][] existingGrid){
+	public LowLevelGraph(LowLevelGraphNode[][] existingGraph){
+		this.sizeX = existingGraph.length;
+		this.sizeY = existingGraph[0].length;
+		this.lowLevelGraph = existingGraph;
+		makeLocatedGraph();
+	}
+	
+	public LowLevelGraph(GridNode[][] existingGrid){
 		this.sizeX = existingGrid.length;
 		this.sizeY = existingGrid[0].length;
-		this.lowLevelGraph = existingGrid;
+		this.lowLevelGraph = generateLowLevelGraphNodesFromExistingGrid(sizeX, sizeY, existingGrid);
+		makeLocatedGraph();
 	}
 	
 	private LowLevelGraphNode[][] generateLowLevelGraphNodes(int x, int y) {
@@ -29,6 +48,21 @@ public class LowLevelGraph {
 			}
 		}
 		return grid;
+	}
+	
+	private LowLevelGraphNode[][] generateLowLevelGraphNodesFromExistingGrid(int x, int y, GridNode[][] existingGrid) {
+		LowLevelGraphNode[][] grid = new LowLevelGraphNode[x][y];
+		for (int i = 0; i < x; i++) {
+			for (int j = 0; j < y; j++) {
+				grid[i][j] = new LowLevelGraphNode(existingGrid[i][j]);
+			}
+		}
+		return grid;
+	}
+	
+	private void makeLocatedGraph(){
+		locatedGraph = lowLevelGraph;
+		LocateIntersectionsSimple();
 	}
 	
 	private void findNeighbors(){
@@ -45,21 +79,21 @@ public class LowLevelGraph {
 				//bottom
 				if(i+1 < sizeX){
 					lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i+1][j]);
-					if(lowLevelGraph[i][j+1].isTraversable()){
+					if(lowLevelGraph[i+1][j].isTraversable()){
 						counter ++;
 					}
 				}
 				//left
-				if(j-1 <= 0){
+				if(j-1 >= 0){
 					lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i][j-1]);
-					if(lowLevelGraph[i][j+1].isTraversable()){
+					if(lowLevelGraph[i][j-1].isTraversable()){
 						counter ++;
 					}
 				}
 				//top
-				if(i-1 <= 0){
+				if(i-1 >= 0){
 					lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i-1][j]);
-					if(lowLevelGraph[i][j+1].isTraversable()){
+					if(lowLevelGraph[i-1][j].isTraversable()){
 						counter ++;
 					}
 				}
@@ -69,20 +103,18 @@ public class LowLevelGraph {
 		}
 	}
 	
-	private List<LowLevelGraphNode> LocateIntersectionsSimple(){
-		locatedGraph = lowLevelGraph;
-		List<LowLevelGraphNode> intersections  = new ArrayList<LowLevelGraphNode>();
+	private void LocateIntersectionsSimple(){
+		intersections  = new ArrayList<LowLevelGraphNode>();
 		findNeighbors();
-		
 		for(int i = 0; i < sizeX; i++){
 			for(int j = 0; j < sizeY; j++){
 				if(locatedGraph[i][j].getNumberOfTraversableNeighbors() > 2){
 					locatedGraph[i][j].setIntersection(true);
 					intersections.add(locatedGraph[i][j]);
+					//TODO Nearly counts all nodes as intersections?
 				}
 			}
 		}
-		return intersections;
 	}
 	
 	public LowLevelGraphNode[][] getLowLevelGraph() {
@@ -92,5 +124,16 @@ public class LowLevelGraph {
 	public LowLevelGraphNode[][] getLocatedGraph() {
 		return locatedGraph;
 	}
+	
+	public List<LowLevelGraphNode> getIntersections() {
+		return intersections;
+	}
 
+	public String toStringSimple(){
+		Character lineEnd = '\n';
+		StringBuilder builder = new StringBuilder();
+		builder.append("Size: " + sizeX + ", " + sizeY + lineEnd);
+		builder.append("Number of Intersections: " + intersections.size());
+		return builder.toString();
+	}
 }

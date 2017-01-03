@@ -1,7 +1,11 @@
 package gui;
 
-import com.sun.org.apache.bcel.internal.generic.LALOAD;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
+import graphGen.LowLevelGraph;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -17,9 +21,11 @@ import javafx.stage.Stage;
 import mapEditor.MapEditorGUI;
 
 public class MainGUI extends Application{
-
+	
+	LowLevelGraph loadedGraph;
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		
 		Label loadGraphLable = new Label();
 		TextField loadGraphTextField = new TextField();
 		Button loadGraphButton = new Button();
@@ -31,10 +37,23 @@ public class MainGUI extends Application{
 
 			@Override
 			public void handle(ActionEvent arg0) {
-				//TODO
+				String name = loadGraphTextField.getText();
+				if(name != null){
+					loadGraph(name);
+					Platform.runLater(new Runnable() { //Opening MapEditorGUI class
+						public void run() {
+							try {
+								new SimulationGUI().start(new Stage(), loadedGraph);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
+					});
+				}
+				
 			}
-			
 		});
+		
 		
 		mapEditorButton.setText("Open Map-Editor");
 		mapEditorButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -51,7 +70,6 @@ public class MainGUI extends Application{
 					}
 				});
 			}
-			
 		});
 		
 		GridPane layout = new GridPane();
@@ -71,7 +89,31 @@ public class MainGUI extends Application{
 		primaryStage.setTitle("Map Editor");
 		primaryStage.setScene(scene);
 		primaryStage.show();
-		
+	}
+	
+	private void loadGraph(String name){
+		LowLevelGraph graph = null;
+		try {
+			FileInputStream fileIn = new FileInputStream(name + ".llg");
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			graph = (LowLevelGraph) in.readObject();
+			in.close();
+			fileIn.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			System.out.println("Parse Error");
+			e.printStackTrace();
+		}
+		if(graph != null){
+			loadedGraph =  graph;
+		}
+	}
+	
+	public void buildSimulationScene(Stage primaryStage){
+		//TODO
 	}
 	
 	public static void main(String[] args) {
