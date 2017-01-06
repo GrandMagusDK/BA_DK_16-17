@@ -7,9 +7,7 @@ import java.util.List;
 import mapEditor.GridNode;
 
 public class LowLevelGraph implements Serializable{
-	/**
-	 * 
-	 */
+	
 	private static final long serialVersionUID = 6307365074491949253L;
 
 	int sizeX, sizeY;
@@ -127,6 +125,14 @@ public class LowLevelGraph implements Serializable{
 	
 	public List<LowLevelGraphNode> getIntersections() {
 		return intersections;
+	}
+	
+	public int getSizeX() {
+		return sizeX;
+	}
+
+	public int getSizeY() {
+		return sizeY;
 	}
 
 	public String toStringSimple(){

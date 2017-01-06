@@ -51,7 +51,6 @@ public class MapEditorGUI extends Application {
 		TextField textFieldFileName = new TextField();
 		Button buttonGenGrid = new Button();
 		Button buttonLoad = new Button();
-		Button buttonProcessToGraph = new Button();
 		Label labelGenerate = new Label();
 		Label labelLoad = new Label();
 		labelGenerate.setText("Enter collumn and row count: (values 10-50)");
@@ -107,16 +106,6 @@ public class MapEditorGUI extends Application {
 			}
 		});
 		
-		buttonProcessToGraph.setText("Process to Graph");
-		buttonProcessToGraph.setOnAction(new EventHandler<ActionEvent>() {
-			
-			@Override
-			public void handle(ActionEvent event) {
-				LowLevelGraph lowGraph = new LowLevelGraph(grid);
-			}
-			//TODO
-		});
-
 		GridPane layout = new GridPane();
 
 		layout.setAlignment(Pos.TOP_LEFT);

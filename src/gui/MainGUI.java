@@ -50,7 +50,6 @@ public class MainGUI extends Application{
 						}
 					});
 				}
-				
 			}
 		});
 		
@@ -86,7 +85,7 @@ public class MainGUI extends Application{
 		
 		Scene scene = new Scene(layout, 420, 210);
 
-		primaryStage.setTitle("Map Editor");
+		primaryStage.setTitle("");
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
@@ -94,7 +93,7 @@ public class MainGUI extends Application{
 	private void loadGraph(String name){
 		LowLevelGraph graph = null;
 		try {
-			FileInputStream fileIn = new FileInputStream(name + ".llg");
+			FileInputStream fileIn = new FileInputStream(name + ".abg");
 			ObjectInputStream in = new ObjectInputStream(fileIn);
 			graph = (LowLevelGraph) in.readObject();
 			in.close();
@@ -110,10 +109,6 @@ public class MainGUI extends Application{
 		if(graph != null){
 			loadedGraph =  graph;
 		}
-	}
-	
-	public void buildSimulationScene(Stage primaryStage){
-		//TODO
 	}
 	
 	public static void main(String[] args) {

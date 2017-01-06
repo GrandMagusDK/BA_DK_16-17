@@ -7,10 +7,9 @@ import java.util.List;
 import mapEditor.GridNode;
 
 public class LowLevelGraphNode extends GridNode implements Serializable{
-	/**
-	 * s
-	 */
+	
 	private static final long serialVersionUID = 6554514388231226491L;
+	
 	private double gScore = Integer.MAX_VALUE;
 	private double hScore = Integer.MAX_VALUE;
 	private double fScore = Integer.MAX_VALUE;

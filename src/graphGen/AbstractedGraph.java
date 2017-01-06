@@ -2,11 +2,14 @@ package graphGen;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 public class AbstractedGraph {
 	private List<AbstractedGraphNode> abstractedNodes;
-	
+	private List<AbstractedGraphEdge> uniqueEdges;
 	private List<LowLevelGraphNode> intersections;
 	private LowLevelGraphNode[][] lowLevelGraph;
 	private List<LowLevelGraphNode> openSet = new ArrayList<>();
@@ -18,6 +21,7 @@ public class AbstractedGraph {
 		this.intersections = intersections;
 		this.lowLevelGraph = locatedGraph;
 		abstractedNodes = generateAbstractedGraphNodes(intersections, lowLevelGraph);
+		uniqueEdges = findUngiqueEdges();
 	}
 	
 	
@@ -73,6 +77,20 @@ public class AbstractedGraph {
 			newNodes[i].setGridPosition(intersections.get(i).getX(), intersections.get(i).getY());
 		}
 		return Arrays.asList(newNodes);
+	}
+	
+	private List<AbstractedGraphEdge> findUngiqueEdges(){
+		List<AbstractedGraphEdge> uniqueEdges = new ArrayList<>();
+		List<AbstractedGraphNode> outList = new ArrayList<>();
+		for(int i = 0; i < abstractedNodes.size(); i++){
+			for(int j = 0; j < abstractedNodes.get(i).getConnectedEdges().size(); i++){
+				if(!(outList.contains(abstractedNodes.get(i).getConnectedEdges().get(j).getNodes()[1]))){
+					uniqueEdges.add(abstractedNodes.get(i).getConnectedEdges().get(j));
+				}
+			}
+			outList.add(abstractedNodes.get(i));
+		}
+		return uniqueEdges;
 	}
 	
 	//A-Star Section
@@ -186,5 +204,23 @@ public class AbstractedGraph {
 			target.setgScore((active.getgScore() + distance));
 			target.setfScore(target.getgScore() + target.gethScore());
 		}
+	}
+	
+	public List<AbstractedGraphNode> getAbstractedNodes() {
+		return abstractedNodes;
+	}
+
+
+	public List<LowLevelGraphNode> getIntersections() {
+		return intersections;
+	}
+
+
+	public LowLevelGraphNode[][] getLowLevelGraph() {
+		return lowLevelGraph;
+	}
+	
+	public List<AbstractedGraphEdge> getUniqueEdges(){
+		return uniqueEdges;
 	}
 }
