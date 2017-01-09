@@ -27,7 +27,12 @@ public class SimulationGUI extends Application{
 	}
 	
 	public void start(Stage primaryStage, LowLevelGraph graph) throws Exception {
-		// TODO Auto-generated method stub
+		// TODO 
+		if(graph != null){
+			System.out.println("SimGUI: Graph recived.");
+			System.out.println("Size" + graph.getSizeX() + ", " + graph.getSizeY());
+			System.out.println("Number of Intersections" + graph.getIntersections().size());
+		}
 		Button buttonProcessToGraph = new Button();
 		listCurrentLLG = new ListView<String>();
 		Label labelCurrentLLG = new Label();
@@ -51,7 +56,13 @@ public class SimulationGUI extends Application{
 			}
 		});
 		
+		grid.add(labelCurrentLLG, 0, 0);
+		grid.add(listCurrentLLG, 0, 2);
+		grid.add(buttonProcessToGraph, 0, 4);
 		
+		Scene scene = new Scene(grid);
+		primaryStage.setScene(scene);
+		primaryStage.show();
 	}
 
 	private void fillListCurrentLLG(){

@@ -67,36 +67,38 @@ public class LowLevelGraph implements Serializable{
 		int counter = 0;
 		for(int i = 0; i < sizeX; i++){			//column
 			for(int j = 0; j < sizeY; j++){		//row
-				//right
-				if(j+1 < sizeY ){
-					lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i][j+1]);
-					if(lowLevelGraph[i][j+1].isTraversable()){
+				if(lowLevelGraph[i][j].isTraversable()){
+					//right
+					if(j+1 < sizeY ){
+						lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i][j+1]);
+						if(lowLevelGraph[i][j+1].isTraversable()){
+							counter ++;
+						}
+					}
+					//bottom
+					if(i+1 < sizeX){
+						lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i+1][j]);
+						if(lowLevelGraph[i+1][j].isTraversable()){
+							counter ++;
+						}
+					}
+					//left
+					if(j-1 >= 0){
+						lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i][j-1]);
+						if(lowLevelGraph[i][j-1].isTraversable()){
 						counter ++;
 					}
-				}
-				//bottom
-				if(i+1 < sizeX){
-					lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i+1][j]);
-					if(lowLevelGraph[i+1][j].isTraversable()){
-						counter ++;
 					}
-				}
-				//left
-				if(j-1 >= 0){
-					lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i][j-1]);
-					if(lowLevelGraph[i][j-1].isTraversable()){
+					//top
+					if(i-1 >= 0){
+						lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i-1][j]);
+						if(lowLevelGraph[i-1][j].isTraversable()){
 						counter ++;
+						}
 					}
+					lowLevelGraph[i][j].setNumberOfTraversableNeighbors(counter);
+					counter = 0;
 				}
-				//top
-				if(i-1 >= 0){
-					lowLevelGraph[i][j].addNeighbor(lowLevelGraph[i-1][j]);
-					if(lowLevelGraph[i-1][j].isTraversable()){
-						counter ++;
-					}
-				}
-				
-				lowLevelGraph[i][j].setNumberOfTraversableNeighbors(counter);
 			}
 		}
 	}
@@ -109,7 +111,7 @@ public class LowLevelGraph implements Serializable{
 				if(locatedGraph[i][j].getNumberOfTraversableNeighbors() > 2){
 					locatedGraph[i][j].setIntersection(true);
 					intersections.add(locatedGraph[i][j]);
-					//TODO Nearly counts all nodes as intersections?
+					System.out.println("Numbers of Intersections Found: " + intersections.size());
 				}
 			}
 		}

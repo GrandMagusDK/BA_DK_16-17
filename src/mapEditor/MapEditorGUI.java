@@ -6,12 +6,12 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import graphGen.LowLevelGraph;
-import graphGen.LowLevelGraphNode;
 import gui.SimulationGUI;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -30,7 +30,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -68,10 +67,7 @@ public class MapEditorGUI extends Application {
 						sizeY = Integer.parseInt(textFieldY.getText());
 						
 						if (sizeX >= 10 && sizeX <= 100 && sizeY >= 10 && sizeY <= 100) {
-							if(sizeY >= 30 || sizeX >= 50)
-								squareSize = 20;
-							if(sizeY >= 60)
-								squareSize = 10;
+							chooseSquaresize();
 							grid = generateGridNodes(sizeX, sizeY, true);
 							buildGridScene(primaryStage, grid);
 						}
@@ -96,6 +92,7 @@ public class MapEditorGUI extends Application {
 						loadFileName += ".txt";
 					}
 					GridNode[][] parsedGrid = parseLoadedData(loadFromFile(loadFileName));
+					chooseSquaresize();
 					buildGridScene(primaryStage, parsedGrid);
 				}
 				else
@@ -267,6 +264,13 @@ public class MapEditorGUI extends Application {
 		Scene scene = new Scene(rootPane, sceneWidth, sceneHeight);
 		primaryStage.setScene(scene);
 	}
+	
+	private void chooseSquaresize(){
+		if(sizeY >= 30 || sizeX >= 50)
+			squareSize = 20;
+		if(sizeY >= 60)
+			squareSize = 10;
+	}
 
 	public GridNode[][] generateGridNodes(int x, int y, boolean createEmpty) {
 		GridNode[][] grid = new GridNode[x][y];
@@ -363,6 +367,8 @@ public class MapEditorGUI extends Application {
 					}
 					counter++;
 				}
+				this.sizeX = sizeX;
+				this.sizeY = sizeY;
 				return grid;
 			}
 			else
@@ -399,6 +405,9 @@ public class MapEditorGUI extends Application {
 		List<String> data;
 		try {
 			data = Files.readAllLines(Paths.get(filename));
+		} catch (NoSuchFileException e){
+			showErrorAlert("Wrong Filename.");
+			return null;
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("File Read Error");

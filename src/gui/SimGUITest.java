@@ -8,12 +8,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
-public class CanvasTest extends Application{
+public class SimGUITest extends Application{
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		Group root = new Group();
-		//Canvas canvas = new Canvas(500, 500);
 		root.prefHeight(500);
 		root.prefWidth(500);
 		
