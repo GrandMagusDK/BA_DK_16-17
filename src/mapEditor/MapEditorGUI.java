@@ -104,7 +104,22 @@ public class MapEditorGUI extends Application {
 		});
 		
 		GridPane layout = new GridPane();
-
+		
+		// Test Block
+		Button testLoad = new Button();
+		testLoad.setText("TestButton");
+		testLoad.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				GridNode[][] parsedGrid = parseLoadedData(loadFromFile("BigTest1.txt"));
+				chooseSquaresize();
+				buildGridScene(primaryStage, parsedGrid);
+				
+			}
+		});
+		layout.add(testLoad, 0, 5, 2 , 1);
+		// Test Block
+		
 		layout.setAlignment(Pos.TOP_LEFT);
 		layout.setHgap(10);
 		layout.setVgap(10);
@@ -118,7 +133,7 @@ public class MapEditorGUI extends Application {
 		layout.add(textFieldFileName, 0, 4, 2, 1);
 		layout.add(buttonLoad, 2, 4, 2 , 1);
 
-		Scene scene = new Scene(layout, 420, 210);
+		Scene scene = new Scene(layout);
 
 		primaryStage.setTitle("Map Editor");
 		primaryStage.setScene(scene);

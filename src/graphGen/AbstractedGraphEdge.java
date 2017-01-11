@@ -1,19 +1,21 @@
 package graphGen;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AbstractedGraphEdge {
 
-	private AbstractedGraphNode[] nodes = new AbstractedGraphNode[2];
+	private List<AbstractedGraphNode> nodes = new ArrayList<>();
 	private double distance;
 	private boolean crossesIntersection = false;
-	private LowLevelGraphPath lowLevelPath;
 
 	public AbstractedGraphEdge(AbstractedGraphNode node1, AbstractedGraphNode node2, double distance) {
-		nodes[0] = node1;
-		nodes[1] = node2;
+		nodes.add(node1);
+		nodes.add(node2);
 		this.distance = distance;
 	}
 
-	public AbstractedGraphNode[] getNodes() {
+	public List<AbstractedGraphNode> getNodes() {
 		return nodes;
 	}
 

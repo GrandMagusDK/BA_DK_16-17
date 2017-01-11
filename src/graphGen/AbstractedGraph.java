@@ -1,127 +1,111 @@
 package graphGen;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AbstractedGraph {
 	private List<AbstractedGraphNode> abstractedNodes;
-	//private List<AbstractedGraphEdge> uniqueEdges;
+	private List<AbstractedGraphEdge> abstractedEdges;
 	private List<LowLevelGraphNode> intersections;
 	private LowLevelGraphNode[][] lowLevelGraph;
+	private List<LowLevelGraphPath> paths;
+	private List<LowLevelGraphPath> directPaths;
+	
 	private List<LowLevelGraphNode> openSet = new ArrayList<>();
 	private List<LowLevelGraphNode> closedSet = new ArrayList<>();
 	private LowLevelGraphNode endNode;
 	private LowLevelGraphNode startNode;
-	private List<LowLevelGraphPath> paths;
-	private List<LowLevelGraphPath> uniqueEdges;
+	
 	
 	public AbstractedGraph(List<LowLevelGraphNode> intersections, LowLevelGraphNode[][] locatedGraph) {
 		this.intersections = intersections;
 		this.lowLevelGraph = locatedGraph;
 	}
-	
+
 	public void startProcessing(){
-		paths = generatePaths(intersections, lowLevelGraph);
-		//TODO generatePaths now does not generate duplicate paths. This allows to make finding connected edges easier
-		uniqueEdges = findUngiqueEdges();
-		abstractedNodes = generateAbstractedGraphNodes(intersections, lowLevelGraph);
-		
+		//TODO 
+		paths = generatePaths(); // generates paths while avoiding reverse paths
+		System.out.println("Number of Paths: " + paths.size());
+		logPaths(paths, 0);
+		directPaths = findDirectPaths(); // finds all paths that just connect two intersections
+		System.out.println("Number of directPaths: " + directPaths.size());
+		logPaths(directPaths, 1);
+		abstractedNodes = generateAbstractedGraphNodes(); // generates AGN and copies over positions form intersections
+		abstractedEdges = generateAbstractedEdges(); // generates AGE and copies over lenght and nodes from directPaths
 	}
 	
-	
-	private List<LowLevelGraphPath> generatePaths(List<LowLevelGraphNode> intersections, LowLevelGraphNode[][] locatedGraph){
+	private List<LowLevelGraphPath> generatePaths(){
 		List<LowLevelGraphPath> paths = new ArrayList<>();
-		
+		//TODO somehow used the same node for both start and end
+		System.out.println(intersections.toString());
 		for(int i=0; i<intersections.size();i++){
-			for(int j = i + 1; i < intersections.size(); i++){ //this avoids generating reverses of already made paths
-				LowLevelGraphPath path = AStarForDistance(intersections.get(i), intersections.get(j), lowLevelGraph);
+			for(int j = i + 1; j < intersections.size(); j++){ //this avoids generating reverses of already made paths
+				//System.out.println("Nodes: " + i + ", " + j);
+				LowLevelGraphPath path = AStarForDistance(intersections.get(i), intersections.get(j));
 				paths.add(path);
 			}
 		}
 		return paths;
 	}
 	
-	private List<LowLevelGraphPath> findConnectedEdges(LowLevelGraphNode intersection, List<LowLevelGraphPath> paths){
+	private List<LowLevelGraphPath> findDirectPaths(){ // kicks out all paths that have crossed more then 1(startNode) intersection
+		List<LowLevelGraphPath> directPaths = new ArrayList<>();
 		
-		List<LowLevelGraphPath> connectedEdges = new ArrayList<>();
-		
-		for(int i=0;i<paths.size(); i++){
-			if(paths.get(i).getNode1() == intersection){
-				if(!paths.get(i).isCrossingIntersection()){
-					connectedEdges.add(paths.get(i)); //simple paths give us the directly connected intersections aka edges in the graph
-				}
+		for(int i = 0; i < paths.size(); i++){
+			if(paths.get(i).getCrossedIntersections() <= 1){
+				directPaths.add(paths.get(i));
 			}
 		}
-		return connectedEdges;
-	}
-	
-	private List<AbstractedGraphNode> generateAbstractedGraphNodes(List<LowLevelGraphNode> intersections, LowLevelGraphNode[][] lowLevelGraph){
-		List<LowLevelGraphPath> paths = generatePaths(intersections, lowLevelGraph);
-		List<LowLevelGraphPath> connectedEdges;
-		AbstractedGraphNode otherNode = null;
-		AbstractedGraphNode[] newNodes = initializeNewNodes(intersections);
 		
-		for(int i=0;i<intersections.size();i++){
-			connectedEdges = findConnectedEdges(intersections.get(i), paths);
-			for(int j=0;j<connectedEdges.size();j++){
-				if(connectedEdges.get(j).getNode1() != intersections.get(i)){
-					int index = intersections.indexOf(connectedEdges.get(j).getNode1());
-					otherNode = newNodes[index];
-				} else if(connectedEdges.get(j).getNode2() != intersections.get(i)){
-					int index = intersections.indexOf(connectedEdges.get(j).getNode2());
-					otherNode = newNodes[index];
-				} else{
-					System.err.println("Error in generateAbstractGraphNodes");
-				}
-				
-				double distance = connectedEdges.get(j).getDistance();
-				AbstractedGraphEdge edge = new AbstractedGraphEdge(newNodes[i], otherNode, distance);
-				//this basically rebuilds intersections as AGN in newNodes
-				if(!newNodes[i].getConnectedEdges().contains(edge)){
-					newNodes[i].addToConnectedEdges(edge);
-				}
-				if(!newNodes[i].getConnectedIntersections().contains(otherNode)){
-					newNodes[i].addToConnectedIntersections(otherNode);
-				}
-			}
-		}
-		return Arrays.asList(newNodes);
+		return directPaths;
 	}
-	
-	private AbstractedGraphNode[] initializeNewNodes(List<LowLevelGraphNode> intersectionsSize){
-		AbstractedGraphNode[] newNodes = new AbstractedGraphNode[intersections.size()];
-		
+
+	private List<AbstractedGraphNode> generateAbstractedGraphNodes(){
+		List<AbstractedGraphNode> newNodes = new ArrayList<>();
 		for(int i = 0; i < intersections.size(); i++){
-			int[] gridPos = new int[2];
-			gridPos[0] = intersections.get(i).getX();
-			gridPos[1] = intersections.get(i).getY();
-			AbstractedGraphNode newNode = new AbstractedGraphNode(gridPos);
-			newNodes[i] = newNode;
+			AbstractedGraphNode newNode = new AbstractedGraphNode(intersections.get(i).getX(), intersections.get(i).getY());
+			newNodes.add(newNode);
 		}
 		
 		return newNodes;
 	}
 	
-	private List<LowLevelGraphPath> findUngiqueEdges(){ // TODO kicks out all paths that have crossed more then 1(startNode) intersection
-		List<LowLevelGraphPath> uniqueEdges = new ArrayList<>();
-		List<LowLevelGraphNode> outList = new ArrayList<>();
-		for(int i = 0; i < abstractedNodes.size(); i++){
-			for(int j = 0; j < abstractedNodes.get(i).getConnectedEdges().size(); i++){
-				if(!(outList.contains(abstractedNodes.get(i).getConnectedEdges().get(j).getNodes()[1]))){
-					uniqueEdges.add(abstractedNodes.get(i).getConnectedEdges().get(j));
-				}
+	private List<AbstractedGraphEdge> generateAbstractedEdges(){
+		AbstractedGraphEdge newEdge;
+		AbstractedGraphNode node1, node2;
+		List<AbstractedGraphEdge> edges = new ArrayList<>();
+		for(int i = 0; i < directPaths.size(); i++){
+			node1 = findAGNfromLLGN(directPaths.get(i).getNode1());
+			node2 = findAGNfromLLGN(directPaths.get(i).getNode2());
+			if(node1 != null && node2 != null && node1 != node2){
+				newEdge = new AbstractedGraphEdge(node1, node2, directPaths.get(i).getDistance());
+				edges.add(newEdge);
 			}
-			outList.add(abstractedNodes.get(i));
 		}
-		return uniqueEdges;
+		return edges;
+	}
+	
+	private AbstractedGraphNode findAGNfromLLGN(LowLevelGraphNode llgn){
+		AbstractedGraphNode agn = null;
+		int x = llgn.getX();
+		int y = llgn.getY();
+		
+		for(int i = 0; i < abstractedNodes.size(); i++){
+			if(abstractedNodes.get(i).getX() == x && abstractedNodes.get(i).getY() == y){
+				agn = abstractedNodes.get(i);
+				break;
+			}
+		}
+		return agn;
 	}
 	
 	//A-Star Section
 	
-	private LowLevelGraphPath AStarForDistance(LowLevelGraphNode startNode, LowLevelGraphNode endNode, LowLevelGraphNode[][] lowLevelGraph){
+	private LowLevelGraphPath AStarForDistance(LowLevelGraphNode startNode, LowLevelGraphNode endNode){
 		boolean targetFound = false;
-		int crossesOtherIntersection = 0;
 		LowLevelGraphNode currentNode;
 		LowLevelGraphPath resultPath = null;
 		this.endNode = endNode;
@@ -140,7 +124,7 @@ public class AbstractedGraph {
 			currentNode = openSet.get(index);
 			moveToClosedSet(currentNode);
 			List<LowLevelGraphNode> neighbors = currentNode.getNeighbors();
- 			System.out.println("Current Node: " + currentNode.getX() + ", " + currentNode.getY());
+ 			//System.out.println("Current Node: " + currentNode.getX() + ", " + currentNode.getY());
 			for(int i=0;i < neighbors.size();i++){
 				if(currentNode.getX() == endNode.getX() && currentNode.getY() == endNode.getY()){
 					neighbors.get(i).setParent(currentNode);
@@ -151,25 +135,16 @@ public class AbstractedGraph {
 				}
 				else if(neighbors.get(i).isTraversable()){
 					addToOpenSet(neighbors.get(i), currentNode);
-					if(currentNode.isIntersection())
-							crossesOtherIntersection++;
 				}
 			}
 		}
-		String pathOrder = recreatePath(endNode, startNode);
-		if(crossesOtherIntersection <= 1){
-			resultPath = new LowLevelGraphPath(startNode, endNode, endNode.getgScore(), true);
-		}
-		else{
-			resultPath = new LowLevelGraphPath(startNode, endNode, endNode.getgScore(), false);
-			System.out.println(pathOrder);
-		}
-		resultPath.setPathString(pathOrder);
+		resultPath = new LowLevelGraphPath(startNode, endNode, endNode.getgScore());
+		recreatePath(endNode, startNode, resultPath);
 		return resultPath;
 	}
 	
 	private int findNextNode(List<LowLevelGraphNode> openSet){ // search through the openSet for the lowest fScore
-		System.out.println("OpenSet Size: " + openSet.size());
+		//System.out.println("OpenSet Size: " + openSet.size());
 		LowLevelGraphNode current = openSet.get(0);
 		if(openSet.size() == 1){
 			return openSet.indexOf(current);
@@ -241,26 +216,82 @@ public class AbstractedGraph {
 		}
 	}
 	
-	private String recreatePath(LowLevelGraphNode endNode, LowLevelGraphNode startNode){
+	private void recreatePath(LowLevelGraphNode endNode, LowLevelGraphNode startNode, LowLevelGraphPath path){
 		LowLevelGraphNode node = endNode;
 		int i = 0;
-		String path = "Path: /n";
-		path += "EndNode ";
+		int crossedIntersections = 0;
+		String pathString = "EndNode: " + endNode.getX() + " " + endNode.getY() + ", StartNode: " + startNode.getX() + " "  + startNode.getY() + '\n';
 		while(i < 1000)
 		{
-			path += node.getX() + " " + node.getY() + " -> ";
+			if(node.isIntersection()){
+				crossedIntersections++;
+			}
+			pathString += node.getX() + " " + node.getY() + " -> ";
 			if(node.getParent() == startNode)
 			{
-				path += "StartNode " + startNode.getX() + " " + startNode.getY();
+				pathString += startNode.getX() + " " + startNode.getY() + " END" + '\n';
+				pathString += "Crossed Intersections: " + crossedIntersections + '\n';
 				break;
 			}
 			node = node.getParent();
 			i++;
 		}
-		return path;
+		path.setCrossesIntersections(crossedIntersections);
+		path.setPathString(pathString);
 	}
 	
-	public List<AbstractedGraphNode> getAbstractedNodes() {
+	private void logPaths(List<LowLevelGraphPath> paths, int pathType){ // pathType 0 = paths, pathType 1 = directPaths
+		String out = "";
+		String filename = " ";
+		for(int i = 0; i < paths.size(); i++){
+			out += paths.get(i).toString() + '\n';
+		}
+		switch(pathType){
+		case 0: filename = "pathsLog.log";
+		break;
+		case 1: filename = "direcPathsLog.log";
+		}
+		saveToFile(filename, out.getBytes());
+	}
+	
+	boolean saveToFile(String filename, byte[] saveData) {
+		try {
+			Files.write(Paths.get(filename), saveData);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	// public Graph operations
+	public AbstractedGraphEdge getEdge(AbstractedGraphNode node1, AbstractedGraphNode node2){
+		AbstractedGraphEdge edge = null;
+		for(int i = 0; i < abstractedEdges.size(); i++){
+			if(abstractedEdges.get(i).getNodes().contains(node1) && abstractedEdges.get(i).getNodes().contains(node2)){
+				edge = abstractedEdges.get(i);
+				break;
+			}
+		}
+		return edge;
+	}
+	
+	public List<AbstractedGraphNode> getConnectedNodes(AbstractedGraphNode node){
+		List<AbstractedGraphNode> nodes = new ArrayList<>();
+		for(int i = 0; i < abstractedEdges.size(); i++){
+			if(abstractedEdges.get(i).getNodes().contains(node)){
+				for(int j = 0; j < abstractedEdges.get(i).getNodes().size(); j++){
+					if(abstractedEdges.get(i).getNodes().get(j) != node){
+						nodes.add(abstractedEdges.get(i).getNodes().get(j));
+					}
+				}
+			}
+		}
+		
+		return nodes;
+	}
+	
+	public List<AbstractedGraphNode> getNodes() {
 		return abstractedNodes;
 	}
 
@@ -274,7 +305,7 @@ public class AbstractedGraph {
 		return lowLevelGraph;
 	}
 	
-	public List<AbstractedGraphEdge> getUniqueEdges(){
-		return uniqueEdges;
+	public List<AbstractedGraphEdge> getEdges(){
+		return abstractedEdges;
 	}
 }

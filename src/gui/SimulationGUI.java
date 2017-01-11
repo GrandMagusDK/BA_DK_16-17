@@ -33,6 +33,7 @@ public class SimulationGUI extends Application{
 			System.out.println("Size" + graph.getSizeX() + ", " + graph.getSizeY());
 			System.out.println("Number of Intersections" + graph.getIntersections().size());
 		}
+		
 		Button buttonProcessToGraph = new Button();
 		listCurrentLLG = new ListView<String>();
 		Label labelCurrentLLG = new Label();
@@ -52,6 +53,7 @@ public class SimulationGUI extends Application{
 			public void handle(ActionEvent event) {
 				// TODO 
 				abstractedGraph = new AbstractedGraph(graph.getIntersections(), graph.getLocatedGraph());
+				abstractedGraph.startProcessing();
 				buildSimScene(primaryStage, abstractedGraph);
 			}
 		});
@@ -90,20 +92,20 @@ public class SimulationGUI extends Application{
 		Group simGroup = new Group();
 		
 		//makeEdges
-		for(int i = 0; i > abstractedGraph.getUniqueEdges().size(); i++){
+		for(int i = 0; i > abstractedGraph.getEdges().size(); i++){
 			double[] coordinates = new double[4];
-			coordinates[0] = abstractedGraph.getUniqueEdges().get(i).getNodes()[0].getGridPosition()[0];
-			coordinates[1] = abstractedGraph.getUniqueEdges().get(i).getNodes()[0].getGridPosition()[1];
-			coordinates[2] = abstractedGraph.getUniqueEdges().get(i).getNodes()[1].getGridPosition()[0];
-			coordinates[3] = abstractedGraph.getUniqueEdges().get(i).getNodes()[1].getGridPosition()[1];
+			coordinates[0] = abstractedGraph.getEdges().get(i).getNodes().get(0).getGridPosition()[0];
+			coordinates[1] = abstractedGraph.getEdges().get(i).getNodes().get(0).getGridPosition()[1];
+			coordinates[2] = abstractedGraph.getEdges().get(i).getNodes().get(1).getGridPosition()[0];
+			coordinates[3] = abstractedGraph.getEdges().get(i).getNodes().get(1).getGridPosition()[1];
 			
 			Rectangle edge = makeEdgeRectangle(coordinates, edgeWidth);
 			simGroup.getChildren().add(edge);
 		}
 		
 		//make Nodes
-		for(int i = 0; i < abstractedGraph.getAbstractedNodes().size(); i++){
-			int[] coords = abstractedGraph.getAbstractedNodes().get(i).getGridPosition();
+		for(int i = 0; i < abstractedGraph.getNodes().size(); i++){
+			int[] coords = abstractedGraph.getNodes().get(i).getGridPosition();
 			Rectangle rec = makeNodeSquare(coords[0], coords[1], squareSize);
 			simGroup.getChildren().add(rec);
 		}

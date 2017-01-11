@@ -111,10 +111,10 @@ public class LowLevelGraph implements Serializable{
 				if(locatedGraph[i][j].getNumberOfTraversableNeighbors() > 2){
 					locatedGraph[i][j].setIntersection(true);
 					intersections.add(locatedGraph[i][j]);
-					System.out.println("Numbers of Intersections Found: " + intersections.size());
 				}
 			}
 		}
+		System.out.println("Numbers of Intersections Found: " + intersections.size());
 	}
 	
 	public LowLevelGraphNode[][] getLowLevelGraph() {

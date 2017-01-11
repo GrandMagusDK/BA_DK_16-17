@@ -1,15 +1,13 @@
 package graphGen;
 
-import com.sun.xml.internal.bind.v2.runtime.RuntimeUtil.ToStringAdapter;
-
 public class LowLevelGraphPath {
 
 	private LowLevelGraphNode node1, node2;
 	private double distance;
-	private boolean crossesIntersection;
+	private int crossedIntersections;
 	private String pathString;
 	
-	public LowLevelGraphPath(LowLevelGraphNode node1, LowLevelGraphNode node2, double distance, boolean crossesIntersection) {
+	public LowLevelGraphPath(LowLevelGraphNode node1, LowLevelGraphNode node2, double distance) {
 		this.node1 = node1;
 		this.node2 = node2;
 		this.distance = distance;
@@ -27,12 +25,12 @@ public class LowLevelGraphPath {
 		this.distance = distance;
 	}
 
-	public boolean isCrossingIntersection() {
-		return crossesIntersection;
+	public int getCrossedIntersections() {
+		return crossedIntersections;
 	}
 
-	public void setCrossesIntersection(boolean crossesIntersection) {
-		this.crossesIntersection = crossesIntersection;
+	public void setCrossesIntersections(int crossedIntersections) {
+		this.crossedIntersections = crossedIntersections;
 	}
 
 	public String getPathString() {
