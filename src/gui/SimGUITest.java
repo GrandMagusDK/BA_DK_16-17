@@ -1,20 +1,30 @@
 package gui;
 
+import javafx.animation.AnimationTimer;
+import javafx.animation.PathTransition;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.LineTo;
+import javafx.scene.shape.MoveTo;
+import javafx.scene.shape.Path;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-
+ 
 public class SimGUITest extends Application{
-
+	Circle agent1 = new Circle(15);
+	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		Group root = new Group();
-		root.prefHeight(500);
-		root.prefWidth(500);
+		agent1.setFill(Color.BLUE);
+		
+		VBox root = new VBox();
+		Group simGroup = new Group();
+		simGroup.prefHeight(500);
+		simGroup.prefWidth(500);
 		
 		double recHeight = 20;
 		double squareSize = recHeight * 1.5;
@@ -85,12 +95,35 @@ public class SimGUITest extends Application{
  		squareNodeEnd.setTranslateY(endY - (squareSize/2));
  		
  		//root.getChildren().add(canvas);
- 		root.getChildren().add(recEdge);
- 		root.getChildren().add(squareNodeStart);
- 		root.getChildren().add(squareNodeEnd);
+ 		simGroup.getChildren().add(recEdge);
+ 		simGroup.getChildren().add(squareNodeStart);
+ 		simGroup.getChildren().add(squareNodeEnd);
+ 		root.getChildren().add(simGroup);
+ 		
+ 		PathTransition ptr = new PathTransition();
+ 		Path path = new Path();
+ 		path.getElements().add(new LineTo(400, 400));
+ 		
+ 		//ptr.setDuration(69);
+ 		
+ 		AnimationTimer timer = new GUITimer();
+ 		timer.start();
  		
  		primaryStage.setScene(new Scene(root, 500, 500));
  		primaryStage.show();
+	}
+
+	private class GUITimer extends AnimationTimer{
+
+		@Override
+		public void handle(long arg0) {
+			// TODO Auto-generated method stub
+			updateAgentPositions();
+		}
+	}
+	
+	private void updateAgentPositions(){
+		//TODO
 	}
 	
 	private int findQuadrant(double[] coords){//coords: startX, startY, endX, endY
