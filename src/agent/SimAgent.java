@@ -27,6 +27,7 @@ public class SimAgent {
 		targetNode = behaviour.chooseTarget();
 		targetPosition = new SimPosition(targetNode.getX(), targetNode.getY());
 		simPath = behaviour.findPath(currentPosition, targetPosition);
+		System.out.println(simPath.toString());
 		calculateAngle();
 		nodeCounter = 0;
 		getNextNodePosition();

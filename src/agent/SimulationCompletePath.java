@@ -17,7 +17,25 @@ public class SimulationCompletePath {
 	public List<AbstractedGraphNode> getAbstractNodeOrder() {
 		return abstractNodeOrder;
 	}
+	
 	public List<SimulationPathLow> getLowPaths() {
 		return lowPaths;
+	}
+	
+	@Override
+	public String toString(){
+		String result = "Complete Path: \n";
+		result += "Top Path: ";
+		for(int i = 0; i < abstractNodeOrder.size(); i++){
+			result += "[" + abstractNodeOrder.get(i).getX() + ", " + abstractNodeOrder.get(i).getY() + "]";
+			if(i < abstractNodeOrder.size() - 1){
+				result += " -> ";
+			}
+		}
+		result += '\n';
+		for(int i = 0; i < lowPaths.size(); i++){
+			result += lowPaths.get(i).toString();
+		}
+		return result;
 	}
 }

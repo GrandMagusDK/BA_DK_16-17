@@ -25,4 +25,16 @@ public class SimulationPathLow {
 	public List<LowLevelGraphNode> getNodeOrder() {
 		return nodeOrder;
 	}
+	@Override
+	public String toString(){
+		String result = "";
+		for(int i = 0 ; i < nodeOrder.size(); i++){
+			result += "[" + nodeOrder.get(i).getX() + ", " + nodeOrder.get(i).getY() + "]";
+			if(nodeOrder.get(i) != endNode){
+				result += " -> ";
+			}
+		}
+		result += '\n';
+		return result;
+	}
 }

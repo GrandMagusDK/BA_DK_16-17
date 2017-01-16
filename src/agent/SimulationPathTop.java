@@ -25,4 +25,10 @@ public class SimulationPathTop {
 	public List<AbstractedGraphNode> getNodeOrder() {
 		return nodeOrder;
 	}
+	
+	public String toString(){
+		String result = "Path: " + '\n';
+		result += "Start: " + startNode.getX() + " " + startNode.getY() + ", End: " + endNode.getX() + " " + endNode.getY() + '\n'; 
+		return result;
+	}
 }
