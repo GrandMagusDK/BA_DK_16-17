@@ -4,18 +4,24 @@ import graphGen.AbstractedGraph;
 import graphGen.AbstractedGraphNode;
 import graphGen.LowLevelGraphNode;
 
-public abstract class AgentBehaviour {
+public class BusAgentBehaviour extends AgentBehaviour{
 
 	AbstractedGraph abstractedGraph;
     LowLevelGraphNode currentPosition;
 	
-	public AgentBehaviour(AbstractedGraph abstractedGraph){
-		this.abstractedGraph =  abstractedGraph;
+	public BusAgentBehaviour(AbstractedGraph abstractedGraph){
+		super(abstractedGraph);
 	}
 	
-	abstract SimulationPathLow findPath();
+	SimulationPathLow findPath(){
+		//TODO
+		return null;
+	}
 	
-	abstract AbstractedGraphNode chooseTarget();
+	AbstractedGraphNode chooseTarget(){
+		//TODO
+		return null;
+	}
 	
 	public AbstractedGraph getAbstractedGraph(){
 		return abstractedGraph;
@@ -24,4 +30,5 @@ public abstract class AgentBehaviour {
 	public LowLevelGraphNode[][] getLowLevelGraphNodes(){
 		return abstractedGraph.getLowLevelGraph();
 	}
+	
 }

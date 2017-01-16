@@ -1,6 +1,7 @@
 package graphGen;
 
 import java.io.IOException;
+import java.nio.channels.AsynchronousByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ public class AbstractedGraph {
 		logPaths(directPaths, 1);
 		abstractedNodes = generateAbstractedGraphNodes(); // generates AGN and copies over positions form intersections
 		abstractedEdges = generateAbstractedEdges(); // generates AGE and copies over lenght and nodes from directPaths
+		findNeighbours();
 	}
 	
 	private List<LowLevelGraphPath> generatePaths(){
@@ -100,6 +102,21 @@ public class AbstractedGraph {
 			}
 		}
 		return agn;
+	}
+	
+	private void findNeighbours(){
+		for(int i = 0; i < abstractedNodes.size(); i++){
+			for(int j = 0; j < abstractedEdges.size(); j++){
+				if(abstractedEdges.get(j).getNodes().contains(abstractedNodes.get(i))){
+					if(abstractedEdges.get(j).getNodes().get(0) == abstractedNodes.get(i)){
+						abstractedNodes.get(i).addToNeighbours(abstractedEdges.get(j).getNodes().get(1));
+					}
+					else if(abstractedEdges.get(j).getNodes().get(1) == abstractedNodes.get(i)){
+						abstractedNodes.get(i).addToNeighbours(abstractedEdges.get(j).getNodes().get(0));
+					}
+				}
+			}
+		}
 	}
 	
 	//A-Star Section

@@ -4,19 +4,19 @@ import graphGen.AbstractedGraphNode;
 
 public class SimAgent {
 	String name;
-	private AgentBehaviour behaviour;
+	private BusAgentBehaviour behaviour;
 	private SimPosition currentPosition;
 	private SimPosition targetPosition;
 	private SimPosition nextNodePosition;
 	private AbstractedGraphNode targetNode;
-	private SimulationPath simPath;
+	private SimulationPathLow simPath;
 	private int nodeCounter = 0;
 	private double stepLength = 1;
 	private double angle;
 	private double nodeResolution = 1;
 	
 	public SimAgent() {}
-	public SimAgent(AgentBehaviour behaviour, SimPosition startPosition){
+	public SimAgent(BusAgentBehaviour behaviour, SimPosition startPosition){
 		this.behaviour = behaviour;
 		this.currentPosition = startPosition;
 	}

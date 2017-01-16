@@ -13,10 +13,10 @@ public class LowLevelGraphNode extends GridNode implements Serializable{
 	private double gScore = Integer.MAX_VALUE;
 	private double hScore = Integer.MAX_VALUE;
 	private double fScore = Integer.MAX_VALUE;
-	boolean intersection = false;
 	private LowLevelGraphNode parent = null;
 	private List<LowLevelGraphNode> neighbors = new ArrayList<LowLevelGraphNode>();
 	private int numberOfTraversableNeighbors = 0;
+	boolean intersection = false;
 	
 	public LowLevelGraphNode(int x, int y) {
 		super(x, y);
