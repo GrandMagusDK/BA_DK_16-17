@@ -7,7 +7,6 @@ import graphGen.AbstractedGraph;
 import graphGen.AbstractedGraphEdge;
 import graphGen.AbstractedGraphNode;
 import graphGen.LowLevelGraphNode;
-import graphGen.LowLevelGraphPath;
 
 public class AStarForAgents {
 	
@@ -30,11 +29,22 @@ public class AStarForAgents {
 	}
 	
 	public SimulationCompletePath findPath(SimPosition startPosition, SimPosition endPosition){
+		List<SimulationPathLow> listLowPaths = new ArrayList<>();
 		SimulationCompletePath completePath = null;
+		SimulationPathLow lowPath;
+		SimPosition currentPos;
+		SimPosition newPos;
+
 		SimulationPathTop topPath = findPathTop();
-		
-		//TODO findLow Paths between each AGN from topPath and compile them into completePath
-		
+		AbstractedGraphNode currentNode = topPath.getNodeOrder().get(0);
+		for(int i = 1; i < topPath.getNodeOrder().size(); i++){
+			currentPos = new SimPosition(currentNode.getX(), currentNode.getY());
+			newPos = new SimPosition(topPath.getNodeOrder().get(i).getX(), topPath.getNodeOrder().get(i).getX());
+			lowPath = findPathLow(currentPos, newPos);
+			listLowPaths.add(lowPath);
+			currentNode = topPath.getNodeOrder().get(i);
+		}
+		completePath = new SimulationCompletePath(abstractedGraph.getNodes(), listLowPaths);
 		return completePath;
 	}
 	
@@ -83,7 +93,6 @@ public class AStarForAgents {
 				}
 			}
 		}
-		//TODO 
 		resultPath = reconstructTopPath();
 		return resultPath;
 	}
@@ -147,12 +156,12 @@ public class AStarForAgents {
 		int i = 0;
 		while(i < 1000){
 			if(currentNode.getParent() == startNodeTop){
-				order.add(currentNode);
+				order.add(0, currentNode);;
 				path = new SimulationPathTop(startNodeTop, endNodeTop, order);
 				return path;
 			}
 			else{
-				order.add(currentNode.getParent());
+				order.add(0, currentNode.getParent());
 				currentNode = currentNode.getParent();
 			}
 		}
@@ -160,17 +169,16 @@ public class AStarForAgents {
 	}
 	
 	//Low Pathfinding
-	private LowLevelGraphPath findPathLow(SimPosition startPosition, SimPosition endPosition){
-		this.startPosition = startPosition;
-		this.endPosition = endPosition;
-		
+	private SimulationPathLow findPathLow(SimPosition startPositionLow, SimPosition endPositionLow){
+		startNodeLow = abstractedGraph.getLowLevelGraph()[startPositionLow.getX()][startPositionLow.getY()];
+		endNodeLow = abstractedGraph.getLowLevelGraph()[endPositionLow.getX()][endPositionLow.getY()];
 		return aStarLow();
 	}
 	
-	private LowLevelGraphPath aStarLow(){
+	private SimulationPathLow aStarLow(){
 		boolean targetFound = false;
 		LowLevelGraphNode currentNode;
-		LowLevelGraphPath resultPath = null;
+		SimulationPathLow resultPath = null;
 		
 		System.out.println("AStar for Nodes: " + startNodeLow.getX() + ", " + startNodeLow.getY() + " and " + endNodeLow.getX() + ", " + endNodeLow.getY());
 		
@@ -200,8 +208,7 @@ public class AStarForAgents {
 				}
 			}
 		}
-		resultPath = new LowLevelGraphPath(startNodeLow, endNodeLow, endNodeLow.getgScore());
-		recreatePath(endNodeLow, startNodeLow, resultPath);
+		resultPath = reconstructLowPath();
 		return resultPath;
 	}
 	
@@ -278,28 +285,25 @@ public class AStarForAgents {
 		}
 	}
 	
-	private void recreatePath(LowLevelGraphNode endNode, LowLevelGraphNode startNode, LowLevelGraphPath path){
-		LowLevelGraphNode node = endNode;
+	private SimulationPathLow reconstructLowPath(){
+		SimulationPathLow path;
+		List<LowLevelGraphNode> order = new ArrayList<>();
+		//TODO
+		LowLevelGraphNode currentNode = endNodeLow;
+		order.add(endNodeLow);
 		int i = 0;
-		int crossedIntersections = 0;
-		String pathString = "EndNode: " + endNode.getX() + " " + endNode.getY() + ", StartNode: " + startNode.getX() + " "  + startNode.getY() + '\n';
-		while(i < 1000)
-		{
-			if(node.isIntersection()){
-				crossedIntersections++;
+		while(i < 1000){
+			if(currentNode.getParent() == startNodeLow){
+				order.add(0, currentNode); //insert in the front to sort start to end.
+				path = new SimulationPathLow(startNodeLow, endNodeLow, order);
+				return path;
 			}
-			pathString += node.getX() + " " + node.getY() + " -> ";
-			if(node.getParent() == startNode)
-			{
-				pathString += startNode.getX() + " " + startNode.getY() + " END" + '\n';
-				pathString += "Crossed Intersections: " + crossedIntersections + '\n';
-				break;
+			else{
+				order.add(0, currentNode.getParent());
+				currentNode = currentNode.getParent();
 			}
-			node = node.getParent();
-			i++;
 		}
-		path.setCrossesIntersections(crossedIntersections);
-		path.setPathString(pathString);
+		return null;
 	}
 	
 }

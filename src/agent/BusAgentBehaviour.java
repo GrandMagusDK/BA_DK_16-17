@@ -1,21 +1,22 @@
 package agent;
 
+import java.util.List;
+
 import graphGen.AbstractedGraph;
 import graphGen.AbstractedGraphNode;
 import graphGen.LowLevelGraphNode;
 
 public class BusAgentBehaviour extends AgentBehaviour{
-
-	AbstractedGraph abstractedGraph;
-    LowLevelGraphNode currentPosition;
+	
+    SimPosition currentPosition;
 	
 	public BusAgentBehaviour(AbstractedGraph abstractedGraph){
 		super(abstractedGraph);
 	}
 	
-	SimulationPathLow findPath(){
-		//TODO
-		return null;
+	SimulationCompletePath findPath(SimPosition startPosition, SimPosition endPosition){
+		AStarForAgents aStar = new AStarForAgents(abstractedGraph);
+		return aStar.findPath(startPosition, endPosition);
 	}
 	
 	AbstractedGraphNode chooseTarget(){

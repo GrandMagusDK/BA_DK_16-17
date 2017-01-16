@@ -1,6 +1,7 @@
 package agent;
 
 import graphGen.AbstractedGraphNode;
+import graphGen.LowLevelGraphNode;
 
 public class SimAgent {
 	String name;
@@ -9,7 +10,9 @@ public class SimAgent {
 	private SimPosition targetPosition;
 	private SimPosition nextNodePosition;
 	private AbstractedGraphNode targetNode;
-	private SimulationPathLow simPath;
+	private SimulationCompletePath simPath;
+	private int currentLowPathIndex = 0;
+	private int currentNodeIndex = 0;
 	private int nodeCounter = 0;
 	private double stepLength = 1;
 	private double angle;
@@ -23,7 +26,7 @@ public class SimAgent {
 	public void initialize(){
 		targetNode = behaviour.chooseTarget();
 		targetPosition = new SimPosition(targetNode.getX(), targetNode.getY());
-		simPath = behaviour.findPath();
+		simPath = behaviour.findPath(currentPosition, targetPosition);
 		calculateAngle();
 		nodeCounter = 0;
 		getNextNodePosition();
@@ -36,6 +39,14 @@ public class SimAgent {
 			return;
 		}
 		calculateNewPosition(stepLength * nodeResolution);
+	}
+	
+	public void generatePublicData(){
+		//TODO
+	}
+	
+	public void handleCollision(){
+		//TODO
 	}
 	
 	private void calculateNewPosition(double moveLength){
@@ -70,13 +81,16 @@ public class SimAgent {
 		currentPosition.setY(newY);
 	}
 	
-	private void getNextNodePosition(){
-		if(nodeCounter < simPath.getNodeOrder().size()){
-			nextNodePosition.setX(simPath.getNodeOrder().get(nodeCounter).getX());
-			nextNodePosition.setY(simPath.getNodeOrder().get(nodeCounter).getY());
-		}
-		else{
-			nextNodePosition = null;
+	private void getNextNodePosition(){ 
+		int x = simPath.getLowPaths().get(currentLowPathIndex).getNodeOrder().get(currentNodeIndex).getX();
+		int y = simPath.getLowPaths().get(currentLowPathIndex).getNodeOrder().get(currentNodeIndex).getY();
+		nextNodePosition = new SimPosition(x, y);
+		
+		currentLowPathIndex++;
+		currentNodeIndex++;
+		if(currentNodeIndex == simPath.getLowPaths().get(currentLowPathIndex).getNodeOrder().size()){
+			currentLowPathIndex++;
+			currentNodeIndex = 0;
 		}
 	}
 	

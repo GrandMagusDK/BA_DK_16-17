@@ -5,15 +5,13 @@ import graphGen.AbstractedGraphNode;
 import graphGen.LowLevelGraphNode;
 
 public abstract class AgentBehaviour {
-
 	AbstractedGraph abstractedGraph;
-    LowLevelGraphNode currentPosition;
 	
 	public AgentBehaviour(AbstractedGraph abstractedGraph){
 		this.abstractedGraph =  abstractedGraph;
 	}
 	
-	abstract SimulationPathLow findPath();
+	abstract SimulationCompletePath findPath(SimPosition startPosition, SimPosition endPosition);
 	
 	abstract AbstractedGraphNode chooseTarget();
 	
