@@ -7,6 +7,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import agent.SimPosition;
+
 public class AbstractedGraph {
 	private List<AbstractedGraphNode> abstractedNodes;
 	private List<AbstractedGraphEdge> abstractedEdges;
@@ -306,6 +308,17 @@ public class AbstractedGraph {
 		}
 		
 		return nodes;
+	}
+	
+	public AbstractedGraphNode getNode(SimPosition position){
+		AbstractedGraphNode result = null;
+		for(int i = 0; i < abstractedNodes.size(); i++){
+			if(abstractedNodes.get(i).getX() == position.getX() && abstractedNodes.get(i).getY() == position.getY() ){
+				result = abstractedNodes.get(i);
+				break;
+			}
+		}
+		return result;
 	}
 	
 	public List<AbstractedGraphNode> getNodes() {

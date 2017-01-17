@@ -24,7 +24,7 @@ public class SimAgent {
 		this.currentPosition = startPosition;
 	}
 	public void initialize(){
-		targetNode = behaviour.chooseTarget();
+		targetNode = behaviour.chooseTarget(currentPosition);
 		targetPosition = new SimPosition(targetNode.getX(), targetNode.getY());
 		simPath = behaviour.findPath(currentPosition, targetPosition);
 		System.out.println(simPath.toString());
@@ -43,6 +43,10 @@ public class SimAgent {
 	}
 	
 	public void generatePublicData(){
+		//TODO
+	}
+	
+	public void detectCollision(){
 		//TODO
 	}
 	

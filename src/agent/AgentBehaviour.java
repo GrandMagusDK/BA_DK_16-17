@@ -13,7 +13,7 @@ public abstract class AgentBehaviour {
 	
 	abstract SimulationCompletePath findPath(SimPosition startPosition, SimPosition endPosition);
 	
-	abstract AbstractedGraphNode chooseTarget();
+	abstract AbstractedGraphNode chooseTarget(SimPosition currentPosition); 
 	
 	public AbstractedGraph getAbstractedGraph(){
 		return abstractedGraph;
