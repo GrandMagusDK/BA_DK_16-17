@@ -239,18 +239,6 @@ public class MapEditorGUI extends Application {
 			@Override
 			public void handle(ActionEvent event) {
 				LowLevelGraph graph = new LowLevelGraph(grid);
-				try {
-					FileOutputStream fileOut = new FileOutputStream("tempgraph.tmp");
-					ObjectOutputStream out = new ObjectOutputStream(fileOut);
-					out.writeObject(graph);
-					out.close();
-					fileOut.close();
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				//TODO Seemingly works final test needs deserialization. Also move to Save Function in SimGUI, not needed here.
 				Platform.runLater(new Runnable() { //Opening MapEditorGUI class
 					public void run() {
 						try {

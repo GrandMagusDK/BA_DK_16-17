@@ -1,10 +1,11 @@
 package graphGen;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AbstractedGraphNode{
 
-	private List<AbstractedGraphNode> neighbours;
+	private List<AbstractedGraphNode> neighbours= new ArrayList<>();
 	private double gScore = Integer.MAX_VALUE;
 	private double hScore = Integer.MAX_VALUE;
 	private double fScore = Integer.MAX_VALUE;

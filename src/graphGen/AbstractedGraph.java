@@ -39,6 +39,7 @@ public class AbstractedGraph {
 		abstractedNodes = generateAbstractedGraphNodes(); // generates AGN and copies over positions form intersections
 		abstractedEdges = generateAbstractedEdges(); // generates AGE and copies over lenght and nodes from directPaths
 		findNeighbours();
+		System.out.println("Finished Processing!");
 	}
 	
 	private List<LowLevelGraphPath> generatePaths(){
@@ -106,17 +107,24 @@ public class AbstractedGraph {
 		return agn;
 	}
 	
-	private void findNeighbours(){
+	private void findNeighbours(){ //Fills List in Nodes with their direct neighbors
 		for(int i = 0; i < abstractedNodes.size(); i++){
 			for(int j = 0; j < abstractedEdges.size(); j++){
-				if(abstractedEdges.get(j).getNodes().contains(abstractedNodes.get(i))){
-					if(abstractedEdges.get(j).getNodes().get(0) == abstractedNodes.get(i)){
-						abstractedNodes.get(i).addToNeighbours(abstractedEdges.get(j).getNodes().get(1));
-					}
-					else if(abstractedEdges.get(j).getNodes().get(1) == abstractedNodes.get(i)){
-						abstractedNodes.get(i).addToNeighbours(abstractedEdges.get(j).getNodes().get(0));
+				for(int k = 0; k < abstractedEdges.get(j).getNodes().size(); k++){
+					AbstractedGraphNode agn = abstractedEdges.get(j).getNodes().get(k);
+					if(agn != abstractedNodes.get(i)){
+						abstractedNodes.get(i).addToNeighbours(agn);
 					}
 				}
+				
+//				if(abstractedEdges.get(j).getNodes().contains(abstractedNodes.get(i))){
+//					if(abstractedEdges.get(j).getNodes().get(0) == abstractedNodes.get(i)){
+//						abstractedNodes.get(i).addToNeighbours(abstractedEdges.get(j).getNodes().get(1));
+//					}
+//					else if(abstractedEdges.get(j).getNodes().get(1) == abstractedNodes.get(i)){
+//						abstractedNodes.get(i).addToNeighbours(abstractedEdges.get(j).getNodes().get(0));
+//					}
+//				}
 			}
 		}
 	}

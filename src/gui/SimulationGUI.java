@@ -1,8 +1,14 @@
 package gui;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+
 import graphGen.AbstractedGraph;
 import graphGen.LowLevelGraph;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -12,7 +18,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
@@ -23,7 +31,7 @@ public class SimulationGUI extends Application{
 	ListView<String> listCurrentLLG;
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		// This will never be used but is required
+		// This will never be used but is required by Application
 	}
 	
 	public void start(Stage primaryStage, LowLevelGraph graph) throws Exception {
@@ -63,6 +71,7 @@ public class SimulationGUI extends Application{
 		grid.add(buttonProcessToGraph, 0, 4);
 		
 		Scene scene = new Scene(grid);
+		primaryStage.setTitle("Simulation");
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
@@ -89,7 +98,33 @@ public class SimulationGUI extends Application{
 		double simHeight = sizeY  * 10;
 		double edgeWidth = 0;
 		double squareSize = edgeWidth * 1.5;
+		HBox rootPanel = new HBox();
 		Group simGroup = new Group();
+		Group controlsGroup = new Group();
+		GridPane controlsGrid = new GridPane();
+		Button saveGraphButton = new Button();
+		TextField saveGraphTextField = new TextField();
+		
+		saveGraphButton.setText("Save Graph");
+		saveGraphButton.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent event) {
+				String name = saveGraphTextField.getText();
+				if(name == "" || name ==null){
+					System.out.println("Name error for saving Graph");
+					return;
+				}
+				saveGraph(name, abstractedGraph);
+			}
+		});
+		
+		controlsGrid.add(saveGraphTextField, 0, 0);
+		controlsGrid.add(saveGraphButton, 1, 0);
+		controlsGroup.getChildren().add(controlsGrid);
+		
+		rootPanel.getChildren().add(simGroup);
+		rootPanel.getChildren().add(controlsGroup);
 		
 		//makeEdges
 		for(int i = 0; i > abstractedGraph.getEdges().size(); i++){
@@ -109,10 +144,26 @@ public class SimulationGUI extends Application{
 			Rectangle rec = makeNodeSquare(coords[0], coords[1], squareSize);
 			simGroup.getChildren().add(rec);
 		}
+		
 		//TODO Some UI design, fix intersection detection and test the shit.
-		Scene scene = new Scene(simGroup);
+		Scene scene = new Scene(rootPanel);
 		primaryStage.setScene(scene);
 		primaryStage.show();
+	}
+
+	private void saveGraph(String name, AbstractedGraph abstractedGraph){
+		//TODO Seemingly works final test needs deserialization.
+		try {
+			FileOutputStream fileOut = new FileOutputStream(name + ".abg");
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			out.writeObject(abstractedGraph);
+			out.close();
+			fileOut.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private Rectangle makeEdgeRectangle(double[] coordinates, double edgeWidth){
