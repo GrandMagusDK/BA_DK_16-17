@@ -1,7 +1,6 @@
 package graphGen;
 
 import java.io.IOException;
-import java.nio.channels.AsynchronousByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -116,15 +115,6 @@ public class AbstractedGraph {
 						abstractedNodes.get(i).addToNeighbours(agn);
 					}
 				}
-				
-//				if(abstractedEdges.get(j).getNodes().contains(abstractedNodes.get(i))){
-//					if(abstractedEdges.get(j).getNodes().get(0) == abstractedNodes.get(i)){
-//						abstractedNodes.get(i).addToNeighbours(abstractedEdges.get(j).getNodes().get(1));
-//					}
-//					else if(abstractedEdges.get(j).getNodes().get(1) == abstractedNodes.get(i)){
-//						abstractedNodes.get(i).addToNeighbours(abstractedEdges.get(j).getNodes().get(0));
-//					}
-//				}
 			}
 		}
 	}

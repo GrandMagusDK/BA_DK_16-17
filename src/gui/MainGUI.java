@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
-import graphGen.LowLevelGraph;
+import graphGen.FullGraph;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -22,7 +22,7 @@ import mapEditor.MapEditorGUI;
 
 public class MainGUI extends Application{
 	
-	LowLevelGraph loadedGraph;
+	FullGraph loadedGraph;
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		
@@ -91,11 +91,12 @@ public class MainGUI extends Application{
 	}
 	
 	private void loadGraph(String name){
-		LowLevelGraph graph = null;
+		FullGraph graph = null;
+		System.out.println("Loading Graph: " + name);
 		try {
 			FileInputStream fileIn = new FileInputStream(name + ".abg");
 			ObjectInputStream in = new ObjectInputStream(fileIn);
-			graph = (LowLevelGraph) in.readObject();
+			graph = (FullGraph) in.readObject();
 			in.close();
 			fileIn.close();
 		} catch (FileNotFoundException e) {
@@ -109,6 +110,7 @@ public class MainGUI extends Application{
 		if(graph != null){
 			loadedGraph =  graph;
 		}
+		System.out.println("Finished Loading Graph");
 	}
 	
 	public static void main(String[] args) {

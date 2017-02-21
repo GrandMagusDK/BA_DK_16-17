@@ -1,10 +1,15 @@
 package graphGen;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AbstractedGraphNode{
+public class AbstractedGraphNode  implements Serializable{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5892934595811255386L;
 	private List<AbstractedGraphNode> neighbours= new ArrayList<>();
 	private double gScore = Integer.MAX_VALUE;
 	private double hScore = Integer.MAX_VALUE;

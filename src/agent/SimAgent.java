@@ -1,7 +1,6 @@
 package agent;
 
 import graphGen.AbstractedGraphNode;
-import graphGen.LowLevelGraphNode;
 
 public class SimAgent {
 	String name;

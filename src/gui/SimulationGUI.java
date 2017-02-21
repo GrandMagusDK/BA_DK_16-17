@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 import graphGen.AbstractedGraph;
+import graphGen.FullGraph;
 import graphGen.LowLevelGraph;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -28,52 +28,94 @@ import javafx.stage.Stage;
 public class SimulationGUI extends Application{
 	LowLevelGraph lowGraph;
 	AbstractedGraph abstractedGraph;
-	ListView<String> listCurrentLLG;
+	FullGraph fullGraph;
+	ListView<String> listCurrentGraph;
+	boolean calledWithFullGraph = false;
+	boolean calledWithLowLevelGraph = false;
+	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		// This will never be used but is required by Application
 	}
-	
-	public void start(Stage primaryStage, LowLevelGraph graph) throws Exception {
-		// TODO 
-		if(graph != null){
-			System.out.println("SimGUI: Graph recived.");
-			System.out.println("Size" + graph.getSizeX() + ", " + graph.getSizeY());
-			System.out.println("Number of Intersections" + graph.getIntersections().size());
+	public void start(Stage primaryStage, FullGraph fullGraph){
+		this.fullGraph = fullGraph;
+		calledWithFullGraph = true;
+		try {
+			buildProcessingScreen(primaryStage);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+	}
+	
+	public void start(Stage primaryStage, LowLevelGraph graph){
+		this.lowGraph = graph;
+		calledWithLowLevelGraph = true;
 		
-		Button buttonProcessToGraph = new Button();
-		listCurrentLLG = new ListView<String>();
-		Label labelCurrentLLG = new Label();
-		
+		try {
+			buildProcessingScreen(primaryStage);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void buildProcessingScreen(Stage primaryStage) throws Exception {
+		// TODO 
+		listCurrentGraph = new ListView<String>();
+		Label labelCurrentGraph = new Label();
+		labelCurrentGraph.setText("Current Graph:");
+		Button buttonnextStep = new Button();
 		GridPane grid = new GridPane();
 		
-		labelCurrentLLG.setText("Current Grid:");
-		if(graph != null){
-			lowGraph = graph;
+		if(calledWithLowLevelGraph){
 			fillListCurrentLLG();
+			buttonnextStep.setText("Process to Graph");
+			
+		}
+		else if(calledWithFullGraph){
+			fillListCurrentFG();
+			buttonnextStep.setText("Continue to Simulation");
 		}
 		
-		buttonProcessToGraph.setText("Process to Graph");
-		buttonProcessToGraph.setOnAction(new EventHandler<ActionEvent>() {
-			
+		buttonnextStep.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
 				// TODO 
-				abstractedGraph = new AbstractedGraph(graph.getIntersections(), graph.getLocatedGraph());
-				abstractedGraph.startProcessing();
-				buildSimScene(primaryStage, abstractedGraph);
+				if(calledWithLowLevelGraph){
+					processToGraph();
+				}
+				saveGraph("tempGraph", fullGraph);
+				buildSimScene(primaryStage);
+				
 			}
 		});
 		
-		grid.add(labelCurrentLLG, 0, 0);
-		grid.add(listCurrentLLG, 0, 2);
-		grid.add(buttonProcessToGraph, 0, 4);
+		grid.add(labelCurrentGraph, 0, 0);
+		grid.add(listCurrentGraph, 0, 2);
+		grid.add(buttonnextStep, 0, 4);
 		
 		Scene scene = new Scene(grid);
 		primaryStage.setTitle("Simulation");
 		primaryStage.setScene(scene);
 		primaryStage.show();
+	}
+	
+	private void processToGraph(){
+		abstractedGraph = new AbstractedGraph(lowGraph.getIntersections(), lowGraph.getLocatedGraph());
+		abstractedGraph.startProcessing();
+		fullGraph = new FullGraph(abstractedGraph.getNodes(), abstractedGraph.getEdges(), lowGraph);
+	}
+	
+	private void fillListCurrentFG(){
+		String endLine = "\n";
+		ObservableList<String> items = FXCollections.observableArrayList();
+		items.add("Size: " + fullGraph.getLowLevelGraph().getSizeX() + " x " + fullGraph.getLowLevelGraph().getSizeY() + endLine);
+		items.add("Intersections: " + endLine);
+		items.add("Number of Intersections: " + fullGraph.getNodes().size() + endLine);
+		
+		for(int i= 0; i < fullGraph.getNodes().size(); i++){
+			items.add("" + i + ": " + fullGraph.getNodes().get(i).getX() + ", " + fullGraph.getNodes().get(i).getY() + endLine);
+		}
+		listCurrentGraph.setItems(items);
 	}
 
 	private void fillListCurrentLLG(){
@@ -86,13 +128,13 @@ public class SimulationGUI extends Application{
 		for(int i= 0; i < lowGraph.getIntersections().size(); i++){
 			items.add("" + i + ": " + lowGraph.getIntersections().get(i).getX() + ", " + lowGraph.getIntersections().get(i).getY() + endLine);
 		}
-		listCurrentLLG.setItems(items);
+		listCurrentGraph.setItems(items);
 	}
 	
-	private void buildSimScene(Stage primaryStage, AbstractedGraph abstractedGraph){
+	private void buildSimScene(Stage primaryStage){
 		
-		int sizeX = abstractedGraph.getLowLevelGraph().length;
-		int sizeY = abstractedGraph.getLowLevelGraph()[0].length;
+		int sizeX = fullGraph.getLowLevelGraph().getSizeX();
+		int sizeY = fullGraph.getLowLevelGraph().getSizeY();
 		
 		double simWidth = sizeX  * 10;
 		double simHeight = sizeY  * 10;
@@ -115,7 +157,7 @@ public class SimulationGUI extends Application{
 					System.out.println("Name error for saving Graph");
 					return;
 				}
-				saveGraph(name, abstractedGraph);
+				saveGraph(name, fullGraph);
 			}
 		});
 		
@@ -126,24 +168,7 @@ public class SimulationGUI extends Application{
 		rootPanel.getChildren().add(simGroup);
 		rootPanel.getChildren().add(controlsGroup);
 		
-		//makeEdges
-		for(int i = 0; i > abstractedGraph.getEdges().size(); i++){
-			double[] coordinates = new double[4];
-			coordinates[0] = abstractedGraph.getEdges().get(i).getNodes().get(0).getGridPosition()[0];
-			coordinates[1] = abstractedGraph.getEdges().get(i).getNodes().get(0).getGridPosition()[1];
-			coordinates[2] = abstractedGraph.getEdges().get(i).getNodes().get(1).getGridPosition()[0];
-			coordinates[3] = abstractedGraph.getEdges().get(i).getNodes().get(1).getGridPosition()[1];
-			
-			Rectangle edge = makeEdgeRectangle(coordinates, edgeWidth);
-			simGroup.getChildren().add(edge);
-		}
 		
-		//make Nodes
-		for(int i = 0; i < abstractedGraph.getNodes().size(); i++){
-			int[] coords = abstractedGraph.getNodes().get(i).getGridPosition();
-			Rectangle rec = makeNodeSquare(coords[0], coords[1], squareSize);
-			simGroup.getChildren().add(rec);
-		}
 		
 		//TODO Some UI design, fix intersection detection and test the shit.
 		Scene scene = new Scene(rootPanel);
@@ -151,14 +176,16 @@ public class SimulationGUI extends Application{
 		primaryStage.show();
 	}
 
-	private void saveGraph(String name, AbstractedGraph abstractedGraph){
+	private void saveGraph(String name, FullGraph abstractedGraph){
 		//TODO Seemingly works final test needs deserialization.
+		System.out.println("Saving Graph");
 		try {
 			FileOutputStream fileOut = new FileOutputStream(name + ".abg");
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
 			out.writeObject(abstractedGraph);
 			out.close();
 			fileOut.close();
+			System.out.println("Finished Saving Graph!");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

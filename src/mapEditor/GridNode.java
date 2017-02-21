@@ -5,6 +5,7 @@ public class GridNode {
 	private int x, y;
 	private boolean traversable = true;
 	
+	public GridNode(){}
 	
 	public GridNode(int x, int y){
 		this.x = x;

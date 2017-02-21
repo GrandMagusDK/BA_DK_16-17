@@ -18,6 +18,10 @@ public class LowLevelGraphNode extends GridNode implements Serializable{
 	private int numberOfTraversableNeighbors = 0;
 	boolean intersection = false;
 	
+	public LowLevelGraphNode() {
+		super();
+	}
+	
 	public LowLevelGraphNode(int x, int y) {
 		super(x, y);
 	}

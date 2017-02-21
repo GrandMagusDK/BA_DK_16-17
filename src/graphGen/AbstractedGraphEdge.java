@@ -1,10 +1,15 @@
 package graphGen;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AbstractedGraphEdge {
+public class AbstractedGraphEdge  implements Serializable{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8800153692298717436L;
 	private List<AbstractedGraphNode> nodes = new ArrayList<>();
 	private double distance;
 	private boolean crossesIntersection = false;
