@@ -4,8 +4,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import graphGen.AbstractedGraph;
+import graphGen.AbstractedGraphEdge;
+import graphGen.AbstractedGraphNode;
 import graphGen.FullGraph;
 import graphGen.LowLevelGraph;
 import javafx.application.Application;
@@ -26,6 +30,10 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 public class SimulationGUI extends Application{
+	double squareSize;
+	double simWidth;
+	double simHeight;
+	double edgeWidth;
 	LowLevelGraph lowGraph;
 	AbstractedGraph abstractedGraph;
 	FullGraph fullGraph;
@@ -136,10 +144,10 @@ public class SimulationGUI extends Application{
 		int sizeX = fullGraph.getLowLevelGraph().getSizeX();
 		int sizeY = fullGraph.getLowLevelGraph().getSizeY();
 		
-		double simWidth = sizeX  * 10;
-		double simHeight = sizeY  * 10;
-		double edgeWidth = 0;
-		double squareSize = edgeWidth * 1.5;
+		simWidth = sizeX  * 10;
+		simHeight = sizeY  * 10;
+		edgeWidth = 10;
+		squareSize = edgeWidth * 1.5;
 		HBox rootPanel = new HBox();
 		Group simGroup = new Group();
 		Group controlsGroup = new Group();
@@ -175,9 +183,30 @@ public class SimulationGUI extends Application{
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
+	
+	private void buildGridView(Group simGroup){ //builds the base grid for the Simulation
+		List<Rectangle> nodeSquares = new ArrayList<>();
+		List<Rectangle> edgeRectangles = new ArrayList<>();
+		
+		nodeSquares = drawNodes(fullGraph.getNodes());
+		edgeRectangles = drawEdges(fullGraph.getEdges());
+	}
+	
+	private List<Rectangle> drawNodes(List<AbstractedGraphNode> nodes){
+		List<Rectangle> squares = new ArrayList<>();
+		for(int i = 0; i<nodes.size(); i++){
+			squares.add(makeNodeSquare(nodes.get(i).getX(), nodes.get(i).getY(), squareSize));
+		}
+		return squares;
+	}
 
+	private List<Rectangle> drawEdges(List<AbstractedGraphEdge> edges){
+		List<Rectangle> edgeRecs = new ArrayList<>();
+		return edgeRecs;
+	}
+	
 	private void saveGraph(String name, FullGraph abstractedGraph){
-		//TODO Seemingly works final test needs deserialization.
+		//TODO Seemingly works final test needs visualization.
 		System.out.println("Saving Graph");
 		try {
 			FileOutputStream fileOut = new FileOutputStream(name + ".abg");
@@ -193,7 +222,7 @@ public class SimulationGUI extends Application{
 		}
 	}
 
-	private Rectangle makeEdgeRectangle(double[] coordinates, double edgeWidth){
+ 	private Rectangle makeEdgeRectangle(double[] coordinates, double edgeWidth){
 		//TODO
 		double squareSize = edgeWidth * 1.5;
 		double startX = coordinates[0];
