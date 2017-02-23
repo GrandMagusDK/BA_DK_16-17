@@ -7,11 +7,16 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import agent.AgentNode;
+import agent.IMapDataUpdate;
+import agent.SimAgent;
+import agent.SimPosition;
 import graphGen.AbstractedGraph;
 import graphGen.AbstractedGraphEdge;
 import graphGen.AbstractedGraphNode;
 import graphGen.FullGraph;
 import graphGen.LowLevelGraph;
+import graphGen.LowLevelGraphNode;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -29,7 +34,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
-public class SimulationGUI extends Application{
+public class SimulationGUI extends Application implements IMapDataUpdate{
 	double squareSize;
 	double simWidth;
 	double simHeight;
@@ -40,6 +45,7 @@ public class SimulationGUI extends Application{
 	ListView<String> listCurrentGraph;
 	boolean calledWithFullGraph = false;
 	boolean calledWithLowLevelGraph = false;
+	List<SimAgent> agents;
 	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -323,5 +329,29 @@ public class SimulationGUI extends Application{
 		if(coords[0] > coords[2] && coords[1] == coords[3])
 			result = 8;
 		return result;
+	}
+	@Override
+	public List<AgentNode> fetchMapData(int agentID, List<AgentNode> requestedNodes) {
+		// TODO
+		for(int i = 0; i < requestedNodes.size(); i++){
+			SimPosition agentPos = requestedNodes.get(i).getCurrentPosition();
+			SimPosition gridPos = translatePositionForAgents(agentPos, agentID);
+			LowLevelGraphNode node = fullGraph.getLowLevelGraph().getLocatedGraph()[gridPos.getX()][gridPos.getY()];
+			requestedNodes.get(i).setTraversable(node.isTraversable());
+		}
+		return requestedNodes;
+	}
+	
+	private SimPosition translatePositionForAgents(SimPosition agentPosition, int agentID){
+		//TODO
+		SimPosition startPos = null;
+		for(int i = 0; i < agents.size(); i++){
+			if(agents.get(i).getID() == agentID){
+				startPos = agents.get(i).getCurrentPosition();
+				break;
+			}
+		}
+		SimPosition newPos = new SimPosition(startPos.getX() + agentPosition.getX(), startPos.getY() + agentPosition.getY());
+		return newPos;
 	}
 }

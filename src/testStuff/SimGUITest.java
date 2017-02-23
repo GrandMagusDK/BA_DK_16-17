@@ -1,4 +1,4 @@
-package gui;
+package testStuff;
 
 import javafx.animation.AnimationTimer;
 import javafx.animation.PathTransition;

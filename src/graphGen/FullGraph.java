@@ -15,11 +15,13 @@ public class FullGraph implements Serializable{
 	List<AbstractedGraphNode> abstractedNodes;
 	List<AbstractedGraphEdge> abstractedEdges;
 	LowLevelGraph lowLevelGraph;
+	int numberOfTraversableSquares;
 
 	public FullGraph(List<AbstractedGraphNode> abstractedNodes, List<AbstractedGraphEdge> abstractedEdges, LowLevelGraph lowLevelGraph){
 		this.abstractedNodes = abstractedNodes;
 		this.abstractedEdges = abstractedEdges;
 		this.lowLevelGraph = lowLevelGraph;
+		countTraversableSquares();
 	}
 	
 	public AbstractedGraphEdge getEdge(AbstractedGraphNode node1, AbstractedGraphNode node2){
@@ -57,6 +59,18 @@ public class FullGraph implements Serializable{
 			}
 		}
 		return result;
+	}
+	
+	private void countTraversableSquares(){
+		int counter = 0;
+		for(int i=0; i<lowLevelGraph.getLocatedGraph().length; i++){
+			for(int j=0; j<lowLevelGraph.getLocatedGraph()[0].length; j++){
+				if(lowLevelGraph.getLocatedGraph()[i][j].isTraversable()){
+					counter++;
+				}
+			}
+		}
+		numberOfTraversableSquares = counter;
 	}
 	
 	public List<AbstractedGraphNode> getNodes() {
