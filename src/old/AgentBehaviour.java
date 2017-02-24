@@ -1,27 +1,21 @@
 package old;
 
-import agent.SimPosition;
-import agent.SimulationCompletePath;
-import graphGen.AbstractedGraph;
 import graphGen.AbstractedGraphNode;
-import graphGen.LowLevelGraphNode;
 
 public abstract class AgentBehaviour {
-	AbstractedGraph abstractedGraph;
 	
-	public AgentBehaviour(AbstractedGraph abstractedGraph){
-		this.abstractedGraph =  abstractedGraph;
+	double stepLenght, communicationRange, sensorRange;
+	
+	public AgentBehaviour(double stepLength, double communicationRange, double SensorRange){
+		this.stepLenght = stepLength;
+		this.communicationRange = communicationRange;
+		this.sensorRange = sensorRange;
 	}
 	
-	abstract SimulationCompletePath findPath(SimPosition startPosition, SimPosition endPosition);
+	
+	
+	abstract void handleEndOfPath();
 	
 	abstract AbstractedGraphNode chooseTarget(SimPosition currentPosition); 
 	
-	public AbstractedGraph getAbstractedGraph(){
-		return abstractedGraph;
-	}
-	
-	public LowLevelGraphNode[][] getLowLevelGraphNodes(){
-		return abstractedGraph.getLowLevelGraph();
-	}
 }

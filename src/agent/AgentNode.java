@@ -5,7 +5,7 @@ public class AgentNode {
 	private boolean unexploredPathMarker;
 	private boolean intersection;
 	private SimPosition worldPosition; //this is just for conveniance
-	private SimPosition currentPosition;
+	private SimPosition position;
 	
 	public AgentNode(){}
 	public AgentNode(SimPosition worldPosition, boolean traversable){
@@ -38,10 +38,10 @@ public class AgentNode {
 		this.worldPosition = worldPosition;
 	}
 	public SimPosition getCurrentPosition() {
-		return currentPosition;
+		return position;
 	}
 	public void setCurrentPosition(SimPosition currentPosition) {
-		this.currentPosition = currentPosition;
+		this.position = currentPosition;
 	}
 	
 }

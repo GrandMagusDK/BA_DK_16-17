@@ -2,7 +2,10 @@ package agent;
 
 import java.util.List;
 
+import graphGen.LowLevelGraphNode;
+
 public interface IMapDataUpdate {
 
-	public List<AgentNode> fetchMapData(int agentID, List<AgentNode> requestedNodes);
+	public List<LowLevelGraphNode> fetchMapData(SimulationAgent agent);
+	public List<SimulationAgent> fetchCommunicationData(SimulationAgent agent);
 }

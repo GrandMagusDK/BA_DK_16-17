@@ -9,7 +9,8 @@ import java.util.List;
 
 import agent.AgentNode;
 import agent.IMapDataUpdate;
-import agent.SimAgent;
+import agent.SimpleAgent;
+import agent.SimulationAgent;
 import agent.SimPosition;
 import graphGen.AbstractedGraph;
 import graphGen.AbstractedGraphEdge;
@@ -45,7 +46,7 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 	ListView<String> listCurrentGraph;
 	boolean calledWithFullGraph = false;
 	boolean calledWithLowLevelGraph = false;
-	List<SimAgent> agents;
+	List<SimpleAgent> agents;
 	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -194,6 +195,8 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 		List<Rectangle> nodeSquares = new ArrayList<>();
 		List<Rectangle> edgeRectangles = new ArrayList<>();
 		
+		//TODO
+		
 		nodeSquares = drawNodes(fullGraph.getNodes());
 		edgeRectangles = drawEdges(fullGraph.getEdges());
 	}
@@ -294,14 +297,6 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 		return square;
 	}
 	
-	private double[] gridToSimCoordinates(int gridX, int gridY){
-		double[] simCoords = new double[2];
-		
-		//TODO
-		
-		return simCoords;
-	}
-	
 	private int findQuadrant(double[] coords){//coords: startX, startY, endX, endY
 		int result = 0;
 		//Quadrant 1 SX < EX, SY < EY
@@ -331,27 +326,36 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 		return result;
 	}
 	@Override
-	public List<AgentNode> fetchMapData(int agentID, List<AgentNode> requestedNodes) {
-		// TODO
-		for(int i = 0; i < requestedNodes.size(); i++){
-			SimPosition agentPos = requestedNodes.get(i).getCurrentPosition();
-			SimPosition gridPos = translatePositionForAgents(agentPos, agentID);
-			LowLevelGraphNode node = fullGraph.getLowLevelGraph().getLocatedGraph()[gridPos.getX()][gridPos.getY()];
-			requestedNodes.get(i).setTraversable(node.isTraversable());
+	public List<LowLevelGraphNode> fetchMapData(SimulationAgent agent) {
+		SimPosition translated;
+		List<LowLevelGraphNode> nodes = new ArrayList<>();
+		for(SimPosition position: agent.getScanPositions()){
+			translated = translatePositionForAgents(position, agent.getStartPosition());
+			nodes.add(fullGraph.getLowLevelGraph().getLocatedGraph()[translated.getX()][translated.getY()]);
 		}
-		return requestedNodes;
+		return nodes;
 	}
 	
-	private SimPosition translatePositionForAgents(SimPosition agentPosition, int agentID){
-		//TODO
-		SimPosition startPos = null;
-		for(int i = 0; i < agents.size(); i++){
-			if(agents.get(i).getID() == agentID){
-				startPos = agents.get(i).getCurrentPosition();
-				break;
+	public List<SimulationAgent> fetchCommunicationData(SimulationAgent agent){
+		List<SimulationAgent> resultAgents = new ArrayList<>();
+		List<SimPosition> translatedPositions = new ArrayList<>();
+		SimPosition translated;
+		for(SimPosition position : agent.getComPositions()){
+			translatedPositions.add(translatePositionForAgents(position, agent.getStartPosition()));
+		}
+		for(SimulationAgent otherAgent : agents){
+			translated = translatePositionForAgents(otherAgent.getCurrentPosition(), otherAgent.getStartPosition());
+			for(SimPosition position : translatedPositions){
+				if(translated == position){
+					resultAgents.add(otherAgent);
+				}
 			}
 		}
-		SimPosition newPos = new SimPosition(startPos.getX() + agentPosition.getX(), startPos.getY() + agentPosition.getY());
+		return resultAgents;
+	}
+	
+	private SimPosition translatePositionForAgents(SimPosition position, SimPosition agentStartPosition){
+		SimPosition newPos = new SimPosition(position.getX() + agentStartPosition.getX(), position.getY() + agentStartPosition.getY());
 		return newPos;
 	}
 }
