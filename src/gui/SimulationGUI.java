@@ -5,19 +5,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import agent.AgentNode;
 import agent.IMapDataUpdate;
 import agent.SimpleAgent;
 import agent.SimulationAgent;
 import agent.SimPosition;
 import graphGen.AbstractedGraph;
-import graphGen.AbstractedGraphEdge;
-import graphGen.AbstractedGraphNode;
 import graphGen.FullGraph;
 import graphGen.LowLevelGraph;
 import graphGen.LowLevelGraphNode;
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -40,6 +40,7 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 	double simWidth;
 	double simHeight;
 	double edgeWidth;
+	int resolution;
 	LowLevelGraph lowGraph;
 	AbstractedGraph abstractedGraph;
 	FullGraph fullGraph;
@@ -47,6 +48,8 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 	boolean calledWithFullGraph = false;
 	boolean calledWithLowLevelGraph = false;
 	List<SimpleAgent> agents;
+	GridPane simGrid;
+	Rectangle[][] nodeSquares;
 	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -151,20 +154,18 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 		int sizeX = fullGraph.getLowLevelGraph().getSizeX();
 		int sizeY = fullGraph.getLowLevelGraph().getSizeY();
 		
-		simWidth = sizeX  * 10;
-		simHeight = sizeY  * 10;
-		edgeWidth = 10;
-		squareSize = edgeWidth * 1.5;
+		resolution = 20;
 		HBox rootPanel = new HBox();
 		Group simGroup = new Group();
 		Group controlsGroup = new Group();
 		GridPane controlsGrid = new GridPane();
+		simGrid = new GridPane();
 		Button saveGraphButton = new Button();
+		Button startButton = new Button();
 		TextField saveGraphTextField = new TextField();
 		
 		saveGraphButton.setText("Save Graph");
 		saveGraphButton.setOnAction(new EventHandler<ActionEvent>() {
-
 			@Override
 			public void handle(ActionEvent event) {
 				String name = saveGraphTextField.getText();
@@ -176,42 +177,91 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 			}
 		});
 		
-		controlsGrid.add(saveGraphTextField, 0, 0);
-		controlsGrid.add(saveGraphButton, 1, 0);
+		startButton.setText("Start");
+		startButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent arg0) {
+				for(SimulationAgent agent : agents){
+					new Thread(agent).start();
+				}
+			}
+		});
+		
+		controlsGrid.add(saveGraphTextField, 0, 1);
+		controlsGrid.add(saveGraphButton, 1, 1);
+		controlsGrid.add(startButton, 0, 0);
 		controlsGroup.getChildren().add(controlsGrid);
 		
 		rootPanel.getChildren().add(simGroup);
 		rootPanel.getChildren().add(controlsGroup);
+		buildGridView();
 		
-		
-		
+		GUITimer timer = new GUITimer();
+		timer.start();
 		//TODO Some UI design, fix intersection detection and test the shit.
 		Scene scene = new Scene(rootPanel);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
 	
-	private void buildGridView(Group simGroup){ //builds the base grid for the Simulation
-		List<Rectangle> nodeSquares = new ArrayList<>();
-		List<Rectangle> edgeRectangles = new ArrayList<>();
-		
-		//TODO
-		
-		nodeSquares = drawNodes(fullGraph.getNodes());
-		edgeRectangles = drawEdges(fullGraph.getEdges());
+	private class GUITimer extends AnimationTimer{
+
+		@Override
+		public void handle(long arg0) {
+			for(SimulationAgent agent : agents){
+				updateAgentPositions(agent);
+			}
+			updateNodeColor();
+		}
 	}
 	
-	private List<Rectangle> drawNodes(List<AbstractedGraphNode> nodes){
-		List<Rectangle> squares = new ArrayList<>();
-		for(int i = 0; i<nodes.size(); i++){
-			squares.add(makeNodeSquare(nodes.get(i).getX(), nodes.get(i).getY(), squareSize));
+	private void buildGridView(){ //builds the base grid for the Simulation
+		//TODO
+		Rectangle newRec;
+		for(int i = 0; i < fullGraph.getLowLevelGraph().getLocatedGraph().length; i++){
+			for(int j = 0; j < fullGraph.getLowLevelGraph().getLocatedGraph().length; j++){
+				newRec = new Rectangle(resolution, resolution);
+				if(fullGraph.getLowLevelGraph().getLocatedGraph()[i][j].isTraversable()){
+					newRec.setFill(Color.WHITE);
+				}
+				else{
+					newRec.setFill(Color.GRAY);
+				}
+				nodeSquares[i][j] = newRec;
+				simGrid.add(newRec, i, j);
+			}
 		}
-		return squares;
 	}
-
-	private List<Rectangle> drawEdges(List<AbstractedGraphEdge> edges){
-		List<Rectangle> edgeRecs = new ArrayList<>();
-		return edgeRecs;
+	
+	public void updateNodeColor() {
+		SimPosition translated;
+		for(SimulationAgent agent : agents){
+			for(SimPosition position: agent.getKnownMapPositions()){
+				translated = translateToWorld(position, agent);
+				if(agent.isKnownPosition(translated)){
+					if(fullGraph.getLowLevelGraph().getLocatedGraph()[translated.getX()][translated.getY()].isTraversable()){
+						nodeSquares[translated.getX()][translated.getY()].setFill(Color.WHITE);
+					}
+				}
+			}
+		}
+	}
+	
+	public void updateAgentPositions(SimulationAgent agent) {
+		SimPosition newPosition = new SimPosition(agent.getCurrentWorldCoord().getX(), agent.getCurrentWorldCoord().getY());
+		moveAgent(newPosition, agent.getSimRectangle());
+	}
+	
+	private void moveAgent(SimPosition newPosition, Rectangle agentRectangle) {
+		simGrid.getChildren().remove(agentRectangle);
+		simGrid.add(agentRectangle, newPosition.getX(), newPosition.getY());
+	}
+	
+	private SimPosition translateToWorld(SimPosition position, SimulationAgent agent){
+		int x = position.getX() - agent.getCoordsOfFirstOrigin().getX() + agent.getStartPosition().getX();
+		int y = position.getY() - agent.getCoordsOfFirstOrigin().getY() + agent.getStartPosition().getY();
+		SimPosition result = new SimPosition(x, y);
+		return result;
 	}
 	
 	private void saveGraph(String name, FullGraph abstractedGraph){
@@ -230,116 +280,31 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 			e.printStackTrace();
 		}
 	}
-
- 	private Rectangle makeEdgeRectangle(double[] coordinates, double edgeWidth){
-		//TODO
-		double squareSize = edgeWidth * 1.5;
-		double startX = coordinates[0];
-		double startY = coordinates[1];
-		double endX = coordinates[2];
-		double endY = coordinates[3];
-		
-		double centeredStartX = startX - (squareSize / 2);
-		double centeredStartY = startY - (squareSize / 2);
-		double centeredEndX = endX - (squareSize / 2);
-		double centeredEndY = endY - (squareSize / 2);
-		
-		int quadrant = findQuadrant(new double[]{centeredStartX, centeredStartY, centeredEndX, centeredEndY});
-		
-		double deltaXAbs = Math.abs(endX - startX);
-		double deltaYAbs = Math.abs(endY - startY);
-		
- 		double recLength = Math.sqrt((Math.pow(deltaXAbs, 2) + Math.pow(deltaYAbs, 2)));
- 		System.out.println(recLength);
- 		
- 		double edgeRot = 0;
- 		double angle = Math.toDegrees(Math.asin(deltaYAbs / recLength));
-
- 		switch(quadrant){
- 		case 1: edgeRot = angle;
- 		break;
- 		case 2: edgeRot = 180.0 - angle;
- 		break;
- 		case 3: edgeRot = 180.0 + angle;
- 		break;
- 		case 4: edgeRot = 360.0 - angle;
- 		break;
- 		case 5: edgeRot = 270;
- 		break;
- 		case 6: edgeRot = 90;
- 		break;
- 		case 7: edgeRot = 0;
- 		break;
- 		case 8: edgeRot = 180;
- 		}
- 		double deltaX = endX - startX;
- 		double deltaY = endY - startY;
-		
- 		Rectangle recEdge = new Rectangle(recLength, 20, Color.DARKGREY);
- 		recEdge.setArcHeight(edgeWidth/5.0);
- 		recEdge.setArcWidth(edgeWidth/5.0);
- 		recEdge.setTranslateX(startX + (deltaX/2.0) - (recLength/2.0));
- 		recEdge.setTranslateY(startY + (deltaY/2.0) - (edgeWidth/2.0));
- 		recEdge.setRotate(edgeRot);
- 		
- 		return recEdge;
-	}
 	
-	private Rectangle makeNodeSquare(double x, double y, double size){
-		Rectangle square = new Rectangle(size, size);
-		square.setArcHeight(size / 5.0);
-		square.setArcWidth(size / 5.0);
-		square.setFill(Color.DARKBLUE);
-		
-		square.setTranslateX(x - (size / 2.0));
-		square.setTranslateY(y - (size / 2.0));
-		
-		return square;
-	}
-	
-	private int findQuadrant(double[] coords){//coords: startX, startY, endX, endY
-		int result = 0;
-		//Quadrant 1 SX < EX, SY < EY
-		if(coords[0] < coords[2] && coords[1] < coords[3]) //startX < endX
-			result = 1;
-		//Quadrant 2 SX > EX, SY < EY
-		if(coords[0] > coords[2] && coords[1] < coords[3]) //startX < endX
-			result = 2;
-		//Quadrant 3 SX > EX, SY > EY
-		if(coords[0] > coords[2] && coords[1] > coords[3]) //startX < endX
-			result = 3;
-		//Quadrant 4 SX < EX, SY > EY
-		if(coords[0] < coords[2] && coords[1] > coords[3]) //startX < endX
-			result = 4;
-		//vertical line SX = EX, SY < EY (Bottom-Top)
-		if(coords[0] == coords[2] && coords[1] < coords[3])
-			result = 5;
-		//vertical line SX = EX, SY > EY (Top-Bottom)
-		if(coords[0] == coords[2] && coords[1] > coords[3])
-			result = 6;
-		//horizontal line SY = EY, SX < EX (Left-Right)
-		if(coords[0] < coords[2] && coords[1] == coords[3])
-			result = 7;
-		//horizontal line SY = EY, SX > EX (Right-Left)
-		if(coords[0] > coords[2] && coords[1] == coords[3])
-			result = 8;
-		return result;
-	}
 	@Override
-	public List<LowLevelGraphNode> fetchMapData(SimulationAgent agent) {
+	public Map<SimPosition, LowLevelGraphNode> fetchMapData(SimulationAgent agent) {
 		SimPosition translated;
-		List<LowLevelGraphNode> nodes = new ArrayList<>();
+		Map<SimPosition, LowLevelGraphNode> result = new HashMap<>();
 		for(SimPosition position: agent.getScanPositions()){
 			translated = translatePositionForAgents(position, agent.getStartPosition());
-			nodes.add(fullGraph.getLowLevelGraph().getLocatedGraph()[translated.getX()][translated.getY()]);
+			if(translated != null){
+				result.put(position, fullGraph.getLowLevelGraph().getLocatedGraph()[translated.getX()][translated.getY()]);
+			}
+			else{
+				result.put(position, null);
+			}
 		}
-		return nodes;
+		return result;
 	}
 	
-	public List<SimulationAgent> fetchCommunicationData(SimulationAgent agent){
-		List<SimulationAgent> resultAgents = new ArrayList<>();
+	public Map<SimulationAgent, SimPosition> fetchCommunicationData(SimulationAgent agent){
+		Map<SimulationAgent, SimPosition> resultAgents = new HashMap<>();
 		List<SimPosition> translatedPositions = new ArrayList<>();
 		SimPosition translated;
+		SimPosition ownPositionTranslated = new SimPosition(agent.getCurrentPosition().getX() + agent.getStartPosition().getX(),
+				agent.getCurrentPosition().getY() + agent.getStartPosition().getY());
+		double deltaX, deltaY, distance;
+		
 		for(SimPosition position : agent.getComPositions()){
 			translatedPositions.add(translatePositionForAgents(position, agent.getStartPosition()));
 		}
@@ -347,7 +312,11 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 			translated = translatePositionForAgents(otherAgent.getCurrentPosition(), otherAgent.getStartPosition());
 			for(SimPosition position : translatedPositions){
 				if(translated == position){
-					resultAgents.add(otherAgent);
+					//deltaX = position.getX() - ownPositionTranslated.getX();
+					//deltaY = position.getY() - ownPositionTranslated.getY();
+					//distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+					int index = translatedPositions.indexOf(position);
+					resultAgents.put(otherAgent, agent.getComPositions().get(index));
 				}
 			}
 		}
@@ -355,7 +324,14 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 	}
 	
 	private SimPosition translatePositionForAgents(SimPosition position, SimPosition agentStartPosition){
-		SimPosition newPos = new SimPosition(position.getX() + agentStartPosition.getX(), position.getY() + agentStartPosition.getY());
+		SimPosition newPos = null;
+		int newX = position.getX() + agentStartPosition.getX();
+		int newY = position.getY() + agentStartPosition.getY();
+		if(newX >= 0 && newY >= 0){
+			if(newX < lowGraph.getSizeX() && newY < lowGraph.getSizeY()){
+				newPos = new SimPosition(newX, newY);
+			}
+		}
 		return newPos;
 	}
 }

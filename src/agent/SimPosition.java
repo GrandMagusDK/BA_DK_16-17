@@ -25,5 +25,10 @@ public class SimPosition {
 		this.y = y;
 	}
 	
+	public boolean equals(SimPosition position){
+		if(this.x == position.getX() && this.y == position.getY())
+			return true;
+		return false;
+	}
 	
 }

@@ -8,8 +8,8 @@ public class AgentNode {
 	private SimPosition position;
 	
 	public AgentNode(){}
-	public AgentNode(SimPosition worldPosition, boolean traversable){
-		this.worldPosition = worldPosition;
+	public AgentNode(SimPosition position, boolean traversable){
+		this.position = position;
 		this.traversable = traversable;
 	}
 	
@@ -37,10 +37,10 @@ public class AgentNode {
 	public void setWorldPosition(SimPosition worldPosition) {
 		this.worldPosition = worldPosition;
 	}
-	public SimPosition getCurrentPosition() {
+	public SimPosition getPosition() {
 		return position;
 	}
-	public void setCurrentPosition(SimPosition currentPosition) {
+	public void setPosition(SimPosition currentPosition) {
 		this.position = currentPosition;
 	}
 	
