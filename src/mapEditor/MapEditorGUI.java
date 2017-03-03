@@ -7,7 +7,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.regex.Pattern;
-
 import graphGen.LowLevelGraph;
 import gui.SimulationGUI;
 import javafx.application.Application;

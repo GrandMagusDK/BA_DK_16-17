@@ -4,24 +4,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import graphGen.LowLevelGraphNode;
 import gui.SimulationGUI;
 
-public class SimpleAgent extends SimulationAgent{
+public class ItelligentAgent extends SimulationAgent{
 	
 	boolean running = true;
-	
-	public SimpleAgent(int id, SimPosition startPosition, FacingDirectionEnum facing, SimulationGUI simGUI){
+
+	public ItelligentAgent(int id, SimPosition startPosition, FacingDirectionEnum facing, SimulationGUI simGUI){
 		super(id, startPosition, 1, 4, 2, facing, simGUI);
 	}
 	
-	public SimpleAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange, int sensorRange, FacingDirectionEnum facing, SimulationGUI simGUI){
-		super(id, startPosition, moveDistance, communicationRange, sensorRange, facing, simGUI);
+	public ItelligentAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange, int sensorRange,
+			FacingDirectionEnum facing, boolean test) {
+		super(id, startPosition, moveDistance, communicationRange, sensorRange, facing, test);
 	}
-	
+
 	@Override
 	public void run() {
-		System.out.println("SimpleAgent Thread running!");
+		System.out.println("Intelligent Agent Thread running!");
 		while(running){
 			doTurn();
 			try {
@@ -68,14 +70,7 @@ public class SimpleAgent extends SimulationAgent{
 		AgentNode node = getNodeFromPosition(position);
 		//TODO
 	}
-	
-	private void updateMapNodeMerge(AgentNode newNode, SimPosition position){
-		AgentNode node = getNodeFromPosition(position);
-		if(node.isUnexploredPathMarker()){
-			node.setUnexploredPathMarker(newNode.isUnexploredPathMarker());
-		}
-	}
-	
+
 	@Override
 	protected void scanForCommunication() {
 		SimPosition otherAgentPosition;
@@ -99,12 +94,10 @@ public class SimpleAgent extends SimulationAgent{
 			}
 		}
 		else{
-			turnRight();
-			Thread.sleep(1000);
-			nextMove();
+			//TODO
 		}
 	}
-	
+
 	private SimPosition lookAhead(){
 		SimPosition position = currentPosition;
 		int x = currentPosition.getX();
@@ -124,43 +117,5 @@ public class SimpleAgent extends SimulationAgent{
 				return position;
 		}
 		return null;
-	}
-	
-	private void turnRight(){ 
-		System.out.println("Turning Right");
-		switch(facing){
-		case TOP : facing = FacingDirectionEnum.RIGHT;
-		System.out.println("Now facing Right");
-		break;
-		case RIGHT : facing = FacingDirectionEnum.BOTTOM;
-		System.out.println("Now facing Bottom");
-		break;
-		case BOTTOM : facing = FacingDirectionEnum.LEFT;
-		System.out.println("Now facing Left");
-		break;
-		case LEFT : facing = FacingDirectionEnum.TOP;
-		System.out.println("Now facing Top");
-		}
-		System.out.println("Turning Right");
-	}
-	
-	private void turnLeft(){
-		switch(facing){
-		case TOP : facing = FacingDirectionEnum.LEFT;
-		break;
-		case RIGHT : facing = FacingDirectionEnum.BOTTOM;
-		break;
-		case BOTTOM : facing = FacingDirectionEnum.RIGHT;
-		break;
-		case LEFT : facing = FacingDirectionEnum.TOP;
-		}
-	}
-	
-	public SimPosition getCurrentPosition(){
-		return currentPosition;
-	}
-	
-	public boolean isRunning() {
-		return running;
 	}
 }

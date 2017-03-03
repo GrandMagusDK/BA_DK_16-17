@@ -8,5 +8,5 @@ import graphGen.LowLevelGraphNode;
 public interface IMapDataUpdate {
 
 	public Map<SimPosition, LowLevelGraphNode> fetchMapData(SimulationAgent agent);
-	public List<SimulationAgent> fetchCommunicationData(SimulationAgent agent);
+	public Map<SimulationAgent, SimPosition> fetchCommunicationData(SimulationAgent agent);
 }

@@ -12,42 +12,50 @@ import testStuff.NewSimGUITest;
 public abstract class SimulationAgent implements Runnable{
 
 	protected int id;
-	protected int sensorRange, communicationRange, moveDistance, currentSizeX, currentSizeY;
+	protected int sensorRange;
+	protected int communicationRange;
+	protected int moveDistance;
+	protected int currentSizeX;
+	protected int currentSizeY;
 	protected SimPosition currentPosition;
 	protected SimPosition coordsOfFirstOrigin; //This is the coords in own coords of the original spawn node.
 	protected SimPosition startPosition; //This is in world coordinates for conveniance.
+	protected FacingDirectionEnum facing;
 	protected AgentNode startNode;
 	protected List<AgentNode> ownMap = new ArrayList<>();
 	protected IMapDataUpdate updater;
 	protected List<SimPosition> scanPositions;
 	protected List<SimPosition> comPositions;
 	protected Map<SimPosition, LowLevelGraphNode> mapData;
-	protected Map<SimulationAgent, SimPosition> agentsInRange;
+	protected List<SimulationAgent> agentsInRange;
 	protected List<SimPosition> knownMapPositions = new ArrayList<>();
 	protected boolean test = false;
 	protected SimulationGUI simGUI;
 	protected NewSimGUITest guiTest;
 	protected Rectangle simRectangle;
 	
-	public SimulationAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange, int sensorRange){
+	public SimulationAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange, int sensorRange, FacingDirectionEnum facing, SimulationGUI simGUI){
 		this.id = id;
 		this.sensorRange = sensorRange;
 		this.communicationRange = communicationRange;
 		this.moveDistance = moveDistance;
 		this.startPosition = startPosition;
 		this.startNode = new AgentNode(new SimPosition(0, 0), true);
+		this.facing = facing;
+		this.simGUI = simGUI;
 		currentPosition = startNode.getPosition();
 		coordsOfFirstOrigin = new SimPosition(0, 0);
 		knownMapPositions.add(new SimPosition(0, 0));
 	}
 	
-	public SimulationAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange, int sensorRange, boolean test){
+	public SimulationAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange, int sensorRange, FacingDirectionEnum facing, boolean test){
 		this.id = id;
 		this.sensorRange = sensorRange;
 		this.communicationRange = communicationRange;
 		this.moveDistance = moveDistance;
 		this.startPosition = startPosition;
 		this.startNode = new AgentNode(new SimPosition(0, 0), true);
+		this.facing = facing;
 		currentPosition = startNode.getPosition();
 		coordsOfFirstOrigin = new SimPosition(0, 0);
 		knownMapPositions.add(new SimPosition(0, 0));
@@ -56,7 +64,7 @@ public abstract class SimulationAgent implements Runnable{
 	
 	protected void doTurn(){
 		scanPositions = buildScanPositions();
-		comPositions = buildCommunicationScanPositions();
+		//comPositions = buildCommunicationScanPositions();
 		getSimData();
 		scanSurroundings();
 		if(!checkOriginAlignment()){
@@ -99,12 +107,11 @@ public abstract class SimulationAgent implements Runnable{
 		List<AgentNode> oldMap = ownMap;
 		List<AgentNode> otherMap = otherAgent.getOwnMap();
 		//calc new Origin Varaiant: Know each others relative position. Also everytime they share map they first put their Origin in the upper left corner of their known map		
-		SimPosition otherOrigin = new SimPosition(otherAgentPosition.getX() - otherAgent.getCurrentPosition().getX(),
-				otherAgentPosition.getY() - otherAgent.getCurrentPosition().getY());
+		// otherAgentPosition - otherAgent.getCurrentPosition();
+		SimPosition otherOrigin = otherAgentPosition.minus(otherAgent.getCurrentPosition()); 
 		//translate all nodes from other map into our coords
 		for(AgentNode node : otherMap){
-			node.getPosition().setX(node.getPosition().getX() + otherOrigin.getX());
-			node.getPosition().setY(node.getPosition().getY() + otherOrigin.getY());
+			node.setPosition(otherOrigin.plus(node.getPosition()));
 		}
 		//merge the two lists:
 		for(AgentNode otherNode : otherMap){
@@ -249,5 +256,25 @@ public abstract class SimulationAgent implements Runnable{
 
 	public void setSimRectangle(Rectangle simRectangle) {
 		this.simRectangle = simRectangle;
+	}
+
+	public FacingDirectionEnum getFacing() {
+		return facing;
+	}
+
+	public void setFacing(FacingDirectionEnum facing) {
+		this.facing = facing;
+	}
+
+	public int getCurrentSizeY() {
+		return currentSizeY;
+	}
+
+	public void setCurrentSizeY(int currentSizeY) {
+		this.currentSizeY = currentSizeY;
+	}
+
+	public int getCommunicationRange() {
+		return communicationRange;
 	}
 }

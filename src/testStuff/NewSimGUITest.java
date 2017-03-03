@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import agent.FacingDirectionEnum;
 import agent.IMapDataUpdate;
 import agent.SimPosition;
@@ -21,17 +20,14 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import sun.management.resources.agent_pt_BR;
 
 public class NewSimGUITest extends Application implements IMapDataUpdate{
 	Rectangle[][] grid;
 	LowLevelGraphNode[][] lowNodes;
 	SimPosition agentPosition;
-	UIUpdateThread updateThread;
 	SimpleAgent agent;
 	Rectangle agentRec;
 	int resolution = 20;
@@ -50,7 +46,7 @@ public class NewSimGUITest extends Application implements IMapDataUpdate{
 		grid = buildGrid(gridPane);
 		fillGridPane(gridPane);
 		
-		agent = new SimpleAgent(0, new SimPosition(0, 0), 1, 2, 2, FacingDirectionEnum.RIGHT, true);
+		//agent = new SimpleAgent(0, new SimPosition(0, 0), 1, 2, 2, FacingDirectionEnum.RIGHT, true);
 		agentPosition = agent.getCurrentWorldCoord();
 		agentRec = new Rectangle(14, 14, Color.BLACK);
 		agentRec.setRotate(45);
@@ -180,8 +176,8 @@ public class NewSimGUITest extends Application implements IMapDataUpdate{
 		return result;
 	}
 	
-	public Map<SimulationAgent, SimPosition> fetchCommunicationData(SimulationAgent agent){
-		Map<SimulationAgent, SimPosition> resultAgents = new HashMap<>();
+	public List<SimulationAgent> fetchCommunicationData(SimulationAgent agent){
+		List<SimulationAgent> resultAgents = new ArrayList<>();
 		List<SimPosition> translatedPositions = new ArrayList<>();
 		SimPosition translated;
 		SimPosition ownPositionTranslated = new SimPosition(agent.getCurrentPosition().getX() + agent.getStartPosition().getX(),
@@ -199,7 +195,7 @@ public class NewSimGUITest extends Application implements IMapDataUpdate{
 					//deltaY = position.getY() - ownPositionTranslated.getY();
 					//distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
 					int index = translatedPositions.indexOf(position);
-					resultAgents.put(otherAgent, agent.getComPositions().get(index));
+					resultAgents.add(otherAgent);
 				}
 			}
 		}

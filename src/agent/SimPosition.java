@@ -31,4 +31,16 @@ public class SimPosition {
 		return false;
 	}
 	
+	public SimPosition plus(SimPosition other){
+		int x = this.x + other.x;
+		int y = this.y + other.y;
+		return new SimPosition(x, y);
+	}
+	
+	public SimPosition minus(SimPosition other){
+		int x = this.x - other.x;
+		int y = this.y - other.y;
+		return new SimPosition(x, y);
+	}
+	
 }
