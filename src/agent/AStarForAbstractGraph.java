@@ -8,7 +8,7 @@ import graphGen.AbstractedGraphEdge;
 import graphGen.AbstractedGraphNode;
 import graphGen.LowLevelGraphNode;
 
-public class AStarForAgents {
+public class AStarForAbstractGraph {
 	
 	private AbstractedGraph abstractedGraph;
 	private SimPosition startPosition;
@@ -24,7 +24,7 @@ public class AStarForAgents {
 	private List<AbstractedGraphNode> openSetTop = new ArrayList<>();
 	private List<AbstractedGraphNode> closedSetTop = new ArrayList<>();
 	
-	public AStarForAgents(AbstractedGraph abstractedGraph) {
+	public AStarForAbstractGraph(AbstractedGraph abstractedGraph) {
 		this.abstractedGraph = abstractedGraph;
 	}
 	
@@ -169,7 +169,7 @@ public class AStarForAgents {
 	}
 	
 	//Low Pathfinding
-	private SimulationPathLow findPathLow(SimPosition startPositionLow, SimPosition endPositionLow){
+	public SimulationPathLow findPathLow(SimPosition startPositionLow, SimPosition endPositionLow){
 		startNodeLow = abstractedGraph.getLowLevelGraph()[startPositionLow.getX()][startPositionLow.getY()];
 		endNodeLow = abstractedGraph.getLowLevelGraph()[endPositionLow.getX()][endPositionLow.getY()];
 		return aStarLow();

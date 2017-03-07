@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import agent.FacingDirectionEnum;
 import agent.IMapDataUpdate;
+import agent.IntelligentAgent;
+import agent.RandomAgent;
 import agent.SimpleAgent;
 import agent.SimulationAgent;
 import agent.SimPosition;
@@ -36,7 +38,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
-public class SimulationGUI extends Application implements IMapDataUpdate{
+public class SimulationGUI extends Application implements IMapDataUpdate {
 	protected GUITimer timer;
 	protected SimulationGUI self = this;
 	protected TextField sensorTextField;
@@ -59,17 +61,19 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 	protected FullGraph fullGraph;
 	protected boolean calledWithFullGraph = false;
 	protected boolean calledWithLowLevelGraph = false;
-	protected List<SimpleAgent> agents = new ArrayList<>();
+	protected List<SimulationAgent> agents = new ArrayList<>();
 	protected GridPane simGrid;
 	protected Rectangle[][] nodeSquares;
 	protected int agentCounter = 0;
 	protected int refreshCounter = 0;
-	
+	protected int numberOfTraversableSquares;
+
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		// This will never be used but is required by Application
 	}
-	public void start(Stage primaryStage, FullGraph fullGraph){
+
+	public void start(Stage primaryStage, FullGraph fullGraph) {
 		this.fullGraph = fullGraph;
 		calledWithFullGraph = true;
 		try {
@@ -78,34 +82,34 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 			e.printStackTrace();
 		}
 	}
-	
-	public void start(Stage primaryStage, LowLevelGraph graph){
+
+	public void start(Stage primaryStage, LowLevelGraph graph) {
 		this.lowGraph = graph;
 		calledWithLowLevelGraph = true;
-		
+
 		try {
 			buildProcessingScreen(primaryStage);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void buildProcessingScreen(Stage primaryStage) throws Exception {
-		//Panes 
+		// Panes
 		listCurrentGraph = new ListView<String>();
 		listViewAgents = new ListView<String>();
 		VBox vBoxRight = new VBox();
 		VBox vBoxLeft = new VBox();
 		HBox hBox = new HBox();
 		GridPane grid = new GridPane();
-		//TextFields
+		// TextFields
 		sensorTextField = new TextField();
 		comTexField = new TextField();
 		startPosXTextField = new TextField();
 		startPosYTextField = new TextField();
 		startPosXTextField.setText("Start X");
 		startPosYTextField.setText("Start Y");
-		//ComboBoxes
+		// ComboBoxes
 		agentTypeComboBox = new ComboBox<>();
 		agentFacingComboBox = new ComboBox<>();
 		ObservableList<String> optionsType = FXCollections.observableArrayList("Simple Agent", "Intelligent Agnet");
@@ -114,23 +118,24 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 		agentTypeComboBox.setPromptText("Agent Type");
 		agentFacingComboBox.setItems(optionsFacing);
 		agentFacingComboBox.setPromptText("Facing Direction");
-		//Buttons
+		// Buttons
 		Button buttonnextStep = new Button();
 		Button addButton = new Button();
-		
-		if(calledWithLowLevelGraph){
+		Button addTestSimpleAgentButton = new Button();
+		Button addTestIntelligentAgentButton = new Button();
+
+		if (calledWithLowLevelGraph) {
 			fillListCurrentLLG();
 			buttonnextStep.setText("Process to Graph");
-		}
-		else if(calledWithFullGraph){
+		} else if (calledWithFullGraph) {
 			fillListCurrentFG();
 			buttonnextStep.setText("Continue to Simulation");
 		}
-		
+
 		buttonnextStep.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				if(calledWithLowLevelGraph){
+				if (calledWithLowLevelGraph) {
 					processToGraph();
 				}
 				saveGraph("tempGraph", fullGraph);
@@ -145,33 +150,70 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 				String facingText = agentFacingComboBox.getValue();
 				int x = Integer.parseInt(startPosXTextField.getText());
 				int y = Integer.parseInt(startPosYTextField.getText());
-				if(type == "Simple Agent"){
-					FacingDirectionEnum facing = getFacing(facingText);
-					SimPosition position = new SimPosition(x, y);
+				FacingDirectionEnum facing = getFacing(facingText);
+				SimPosition position = new SimPosition(x, y);
+				if (type == "Simple Agent") {
 					SimpleAgent agent = new SimpleAgent(agentCounter, position, facing, self);
 					agents.add(agent);
-					listViewAgents.getItems().add("Simple Agent: ID: " + agentCounter + " , Startposition: " + x + ", " + y);
+					listViewAgents.getItems()
+							.add("Simple Agent: ID: " + agentCounter + " , Startposition: " + x + ", " + y);
 					agentCounter++;
-				}
-				else if(type == "Intelligent Agnet"){
-					//TODO
-					//agents.add(new IntelligentAgent(agentCounter, new SimPosition(x, y), getFacing(facing)));
+				} else if (type == "Random Agnet") {
+					RandomAgent agent = new RandomAgent(agentCounter, position, facing, self);
+					agents.add(agent);
+					listViewAgents.getItems()
+							.add("Random Agent: ID: " + agentCounter + " , Startposition: " + x + ", " + y);
+					agentCounter++;
+				} else if (type == "Intelligent Agnet") {
+					IntelligentAgent agent = new IntelligentAgent(agentCounter, position, facing, self);
+					agents.add(agent);
+					listViewAgents.getItems()
+							.add("Intelligent Agent: ID: " + agentCounter + " , Startposition: " + x + ", " + y);
+					agentCounter++;
 				}
 			}
 		});
-		
-		//LeftSide
+
+		addTestIntelligentAgentButton.setText("Test Intelligent");
+		addTestIntelligentAgentButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				IntelligentAgent agent = new IntelligentAgent(agentCounter, new SimPosition(0, 0),
+						FacingDirectionEnum.RIGHT, self);
+				agents.add(agent);
+				listViewAgents.getItems()
+						.add("Intelligent Agent: ID: " + agentCounter + " , Startposition: " + 0 + ", " + 0);
+				agentCounter++;
+			}
+		});
+
+		addTestSimpleAgentButton.setText("Test Simple");
+		addTestSimpleAgentButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				SimpleAgent agent = new SimpleAgent(agentCounter, new SimPosition(0, 0), FacingDirectionEnum.RIGHT,
+						self);
+				agents.add(agent);
+				listViewAgents.getItems()
+						.add("Simple Agent: ID: " + agentCounter + " , Startposition: " + 0 + ", " + 0);
+				agentCounter++;
+			}
+		});
+
+		// LeftSide
 		vBoxLeft.getChildren().add(listCurrentGraph);
 		vBoxLeft.getChildren().add(buttonnextStep);
-		//Right Side
+		// Right Side
 		grid.add(agentTypeComboBox, 0, 1);
 		grid.add(agentFacingComboBox, 2, 1);
 		grid.add(startPosXTextField, 0, 2);
 		grid.add(startPosYTextField, 2, 2);
 		grid.add(addButton, 0, 3);
+		grid.add(addTestSimpleAgentButton, 2, 3);
+		grid.add(addTestIntelligentAgentButton, 4, 3);
 		vBoxRight.getChildren().add(grid);
 		vBoxRight.getChildren().add(listViewAgents);
-		
+
 		hBox.getChildren().add(vBoxLeft);
 		hBox.getChildren().add(vBoxRight);
 		Scene scene = new Scene(hBox);
@@ -179,47 +221,51 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
-	
-	private void processToGraph(){
+
+	private void processToGraph() {
 		abstractedGraph = new AbstractedGraph(lowGraph.getIntersections(), lowGraph.getLocatedGraph());
 		abstractedGraph.startProcessing();
 		fullGraph = new FullGraph(abstractedGraph.getNodes(), abstractedGraph.getEdges(), lowGraph);
 	}
-	
-	private void fillListCurrentFG(){
+
+	private void fillListCurrentFG() {
 		String endLine = "\n";
 		ObservableList<String> items = FXCollections.observableArrayList();
-		items.add("Size: " + fullGraph.getLowLevelGraph().getSizeX() + " x " + fullGraph.getLowLevelGraph().getSizeY() + endLine);
+		items.add("Size: " + fullGraph.getLowLevelGraph().getSizeX() + " x " + fullGraph.getLowLevelGraph().getSizeY()
+				+ endLine);
 		items.add("Intersections: " + endLine);
 		items.add("Number of Intersections: " + fullGraph.getNodes().size() + endLine);
-		
-		for(int i= 0; i < fullGraph.getNodes().size(); i++){
-			items.add("" + i + ": " + fullGraph.getNodes().get(i).getX() + ", " + fullGraph.getNodes().get(i).getY() + endLine);
+
+		for (int i = 0; i < fullGraph.getNodes().size(); i++) {
+			items.add("" + i + ": " + fullGraph.getNodes().get(i).getX() + ", " + fullGraph.getNodes().get(i).getY()
+					+ endLine);
 		}
 		listCurrentGraph.setItems(items);
 	}
 
-	private void fillListCurrentLLG(){
+	private void fillListCurrentLLG() {
 		String endLine = "\n";
 		ObservableList<String> items = FXCollections.observableArrayList();
 		items.add("Size: " + lowGraph.getSizeX() + " x " + lowGraph.getSizeY() + endLine);
 		items.add("Intersections: " + endLine);
 		items.add("Number of Intersections: " + lowGraph.getIntersections().size() + endLine);
-		
-		for(int i= 0; i < lowGraph.getIntersections().size(); i++){
-			items.add("" + i + ": " + lowGraph.getIntersections().get(i).getX() + ", " + lowGraph.getIntersections().get(i).getY() + endLine);
+
+		for (int i = 0; i < lowGraph.getIntersections().size(); i++) {
+			items.add("" + i + ": " + lowGraph.getIntersections().get(i).getX() + ", "
+					+ lowGraph.getIntersections().get(i).getY() + endLine);
 		}
 		listCurrentGraph.setItems(items);
 	}
+
 	//
-	//Scene: Simulation
+	// Scene: Simulation
 	//
-	private void buildSimScene(Stage primaryStage){
-		
+	private void buildSimScene(Stage primaryStage) {
+
 		int sizeX = fullGraph.getLowLevelGraph().getSizeX();
 		int sizeY = fullGraph.getLowLevelGraph().getSizeY();
 		nodeSquares = new Rectangle[sizeX][sizeY];
-		
+
 		resolution = 20;
 		agentRecSize = (int) (0.5 + Math.sqrt(Math.pow(resolution, 2) / 2));
 		HBox hBox = new HBox();
@@ -230,31 +276,31 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 		Button saveGraphButton = new Button();
 		Button startButton = new Button();
 		TextField saveGraphTextField = new TextField();
-		
+
 		saveGraphButton.setText("Save Graph");
 		saveGraphButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
 				String name = saveGraphTextField.getText();
-				if(name == "" || name ==null){
+				if (name == "" || name == null) {
 					System.out.println("Name error for saving Graph");
 					return;
 				}
 				saveGraph(name, fullGraph);
 			}
 		});
-		
-		startButton.setText("Start"); //starts Agents
+
+		startButton.setText("Start"); // starts Agents
 		startButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
-				for(SimulationAgent agent : agents){
+				for (SimulationAgent agent : agents) {
 					new Thread(agent).start();
 				}
 				timer.start();
 			}
 		});
-		
+
 		controlsGrid.add(saveGraphTextField, 0, 1);
 		controlsGrid.add(saveGraphButton, 1, 1);
 		controlsGrid.add(startButton, 0, 0);
@@ -265,40 +311,41 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 		simGroup.getChildren().add(simGrid);
 		hBox.getChildren().add(simGroup);
 		hBox.getChildren().add(controlsGroup);
-		
+
 		timer = new GUITimer();
-		
+
 		Scene scene = new Scene(hBox);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
-	
+
 	//
 	// Methods
 	//
-	private class GUITimer extends AnimationTimer{
+	private class GUITimer extends AnimationTimer {
 
 		@Override
 		public void handle(long arg0) {
-			//if(refreshCounter == 60){
-				for(SimulationAgent agent : agents){
-					updateAgentPositions(agent);
-				}
-				updateNodeColor();
-				refreshCounter = 0;
-			//}
+			for (SimulationAgent agent : agents) {
+				updateAgentPositions(agent);
+			}
+			updateNodeColor();
+			if (numberOfTraversableSquares == scannedPositions.size()) {
+				System.out.println("Map completed");
+			}
 		}
 	}
-	
-	private void buildGridView(){ //builds the base grid for the Simulation
+
+	private void buildGridView() { // builds the base grid for the Simulation
+		numberOfTraversableSquares = 0;
 		Rectangle newRec;
-		for(int i = 0; i < fullGraph.getLowLevelGraph().getLocatedGraph().length; i++){
-			for(int j = 0; j < fullGraph.getLowLevelGraph().getLocatedGraph().length; j++){
+		for (int i = 0; i < fullGraph.getLowLevelGraph().getLocatedGraph().length; i++) {
+			for (int j = 0; j < fullGraph.getLowLevelGraph().getLocatedGraph().length; j++) {
 				newRec = new Rectangle(resolution, resolution);
-				if(fullGraph.getLowLevelGraph().getLocatedGraph()[i][j].isTraversable()){
+				if (fullGraph.getLowLevelGraph().getLocatedGraph()[i][j].isTraversable()) {
 					newRec.setFill(Color.BISQUE);
-				}
-				else{
+					numberOfTraversableSquares++;
+				} else {
 					newRec.setFill(Color.GRAY);
 				}
 				nodeSquares[i][j] = newRec;
@@ -306,63 +353,68 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 			}
 		}
 	}
-	
-	private void buildAgentRectangles(){
+
+	private void buildAgentRectangles() {
 		Rectangle rec;
-		for(SimulationAgent agent : agents){
+		for (SimulationAgent agent : agents) {
 			rec = new Rectangle(agentRecSize, agentRecSize);
 			rec.setRotate(45);
-			rec.setArcHeight(agentRecSize/10);
-			rec.setArcWidth(agentRecSize/10);
+			rec.setArcHeight(agentRecSize / 10);
+			rec.setArcWidth(agentRecSize / 10);
 			rec.setFill(chooseAgentColor(agent.getId()));
 			agent.setSimRectangle(rec);
 			simGrid.add(agent.getSimRectangle(), agent.getStartPosition().getX(), agent.getStartPosition().getY());
 		}
 	}
-	
-	private Color chooseAgentColor(int id){
-		switch(id%9){
-		case 0: return Color.BLACK;
-		case 1: return Color.BLUE;
-		case 2: return Color.BLUEVIOLET;
-		case 3: return Color.BROWN;
-		case 4: return Color.DARKCYAN;
-		case 5: return Color.DARKBLUE;
-		case 6: return Color.RED;
-		case 7: return Color.CHOCOLATE;
-		case 8: return Color.GREEN;
-		case 9: return Color.AQUA;
-		default : return Color.BLACK;
+
+	private Color chooseAgentColor(int id) {
+		switch (id % 9) {
+		case 0:
+			return Color.BLACK;
+		case 1:
+			return Color.BLUE;
+		case 2:
+			return Color.BLUEVIOLET;
+		case 3:
+			return Color.BROWN;
+		case 4:
+			return Color.DARKCYAN;
+		case 5:
+			return Color.DARKBLUE;
+		case 6:
+			return Color.RED;
+		case 7:
+			return Color.CHOCOLATE;
+		case 8:
+			return Color.GREEN;
+		case 9:
+			return Color.AQUA;
+		default:
+			return Color.BLACK;
 		}
 	}
-	
+
 	public void updateNodeColor() {
-		for(SimPosition position : scannedPositions){
-			if(fullGraph.getLowLevelGraph().getLocatedGraph()[position.getX()][position.getY()].isTraversable()){
+		for (SimPosition position : scannedPositions) {
+			if (fullGraph.getLowLevelGraph().getLocatedGraph()[position.getX()][position.getY()].isTraversable()) {
 				nodeSquares[position.getX()][position.getY()].setFill(Color.WHITE);
 			}
 		}
 	}
-	
+
 	public void updateAgentPositions(SimulationAgent agent) {
-		SimPosition newPosition = new SimPosition(agent.getCurrentWorldCoord().getX(), agent.getCurrentWorldCoord().getY());
+		SimPosition newPosition = new SimPosition(agent.getCurrentWorldCoord().getX(),
+				agent.getCurrentWorldCoord().getY());
 		moveAgent(newPosition, agent.getSimRectangle());
 	}
-	
+
 	private void moveAgent(SimPosition newPosition, Rectangle agentRectangle) {
 		simGrid.getChildren().remove(agentRectangle);
 		simGrid.add(agentRectangle, newPosition.getX(), newPosition.getY());
 	}
-	
-	private SimPosition translateToWorld(SimPosition position, SimulationAgent agent){
-		int x = position.getX() - agent.getCoordsOfFirstOrigin().getX() + agent.getStartPosition().getX();
-		int y = position.getY() - agent.getCoordsOfFirstOrigin().getY() + agent.getStartPosition().getY();
-		SimPosition result = new SimPosition(x, y);
-		return result;
-	}
-	
-	private void saveGraph(String name, FullGraph abstractedGraph){
-		//TODO Seemingly works final test needs visualization.
+
+	private void saveGraph(String name, FullGraph abstractedGraph) {
+		// TODO Seemingly works final test needs visualization.
 		System.out.println("Saving Graph");
 		try {
 			FileOutputStream fileOut = new FileOutputStream(name + ".abg");
@@ -377,73 +429,79 @@ public class SimulationGUI extends Application implements IMapDataUpdate{
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Override
 	public Map<SimPosition, LowLevelGraphNode> fetchMapData(SimulationAgent agent) {
 		SimPosition translated;
 		Map<SimPosition, LowLevelGraphNode> result = new HashMap<>();
-		for(SimPosition position: agent.getScanPositions()){
+		for (SimPosition position : agent.getScanPositions()) {
 			translated = translatePositionForAgents(position, agent.getStartPosition());
-			if(translated != null){
-				result.put(position, fullGraph.getLowLevelGraph().getLocatedGraph()[translated.getX()][translated.getY()]);
-				if(!isScannedPosition(translated))
+			if (translated != null) {
+				result.put(position,
+						fullGraph.getLowLevelGraph().getLocatedGraph()[translated.getX()][translated.getY()]);
+				if (!isScannedPosition(translated))
 					scannedPositions.add(translated);
-			}
-			else{
+			} else {
 				result.put(position, null);
 			}
 		}
 		return result;
 	}
-	
-	public boolean isScannedPosition(SimPosition position){
-		for(SimPosition pos : scannedPositions){
-			if(pos.equals(position))
+
+	public boolean isScannedPosition(SimPosition position) {
+		List<SimPosition> scanned = new ArrayList<>(scannedPositions);
+		for (SimPosition pos : scanned) {
+			if (pos.equals(position))
 				return true;
 		}
 		return false;
 	}
-	
-	public List<SimulationAgent> fetchCommunicationData(SimulationAgent callingAgent){
+
+	public List<SimulationAgent> fetchCommunicationData(SimulationAgent callingAgent) {
 		List<SimulationAgent> resultAgents = new ArrayList<>();
 		double x, y, distance;
-		for(SimulationAgent agent : agents){
-			if(agent != callingAgent){
+		for (SimulationAgent agent : agents) {
+			if (agent != callingAgent) {
 				x = agent.getCurrentWorldCoord().getX() - callingAgent.getCurrentWorldCoord().getX();
 				y = agent.getCurrentWorldCoord().getY() - callingAgent.getCurrentWorldCoord().getY();
 				distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-				if(((int) distance + 0.5) <= callingAgent.getCommunicationRange()){
+				if (((int) distance + 0.5) <= callingAgent.getCommunicationRange()) {
 					resultAgents.add(agent);
 				}
 			}
 		}
 		return resultAgents;
 	}
-	
-	private SimPosition translatePositionForAgents(SimPosition position, SimPosition agentStartPosition){
+
+	private SimPosition translatePositionForAgents(SimPosition position, SimPosition agentStartPosition) {
 		SimPosition newPos = null;
 		int newX = position.getX() + agentStartPosition.getX();
 		int newY = position.getY() + agentStartPosition.getY();
-		if(newX >= 0 && newY >= 0){
-			if(newX < lowGraph.getSizeX() && newY < lowGraph.getSizeY()){
+		if (newX >= 0 && newY >= 0) {
+			if (newX < lowGraph.getSizeX() && newY < lowGraph.getSizeY()) {
 				newPos = new SimPosition(newX, newY);
 			}
 		}
 		return newPos;
 	}
-	
-	private FacingDirectionEnum getFacing(String direction){
+
+	private FacingDirectionEnum getFacing(String direction) {
 		FacingDirectionEnum facing;
-		switch(direction){
-		case "Top": facing = FacingDirectionEnum.TOP;
+		switch (direction) {
+		case "Top":
+			facing = FacingDirectionEnum.TOP;
 			break;
-		case "Right": facing = FacingDirectionEnum.RIGHT;
+		case "Right":
+			facing = FacingDirectionEnum.RIGHT;
 			break;
-		case "Bottom" : facing = FacingDirectionEnum.BOTTOM;
+		case "Bottom":
+			facing = FacingDirectionEnum.BOTTOM;
 			break;
-		case "Left" : facing = FacingDirectionEnum.LEFT;
+		case "Left":
+			facing = FacingDirectionEnum.LEFT;
 			break;
-		default : facing = FacingDirectionEnum.TOP; 
+		default:
+			facing = FacingDirectionEnum.TOP;
 		}
 		return facing;
 	}

@@ -10,6 +10,7 @@ import gui.SimulationGUI;
 public class SimpleAgent extends SimulationAgent{
 	
 	boolean running = true;
+	int waitCounter = 0;
 	
 	public SimpleAgent(int id, SimPosition startPosition, FacingDirectionEnum facing, SimulationGUI simGUI){
 		super(id, startPosition, 1, 4, 2, facing, simGUI);
@@ -47,7 +48,7 @@ public class SimpleAgent extends SimulationAgent{
 		List<SimPosition> newPositions = new ArrayList<>();
 		for(SimPosition position : positions){
 			if(knownMapPositions.contains(position)){
-				updateMapNodeSensor(mapData.get(position), position);
+				//TODO updateMapNodeSensor(mapData.get(position), position);
 			}
 			else{
 				newPositions.add(position);
@@ -64,17 +65,10 @@ public class SimpleAgent extends SimulationAgent{
 		}
 	}
 	
-	private void updateMapNodeSensor(LowLevelGraphNode lowNode, SimPosition position){
-		AgentNode node = getNodeFromPosition(position);
-		//TODO
-	}
-	
-	private void updateMapNodeMerge(AgentNode newNode, SimPosition position){
-		AgentNode node = getNodeFromPosition(position);
-		if(node.isUnexploredPathMarker()){
-			node.setUnexploredPathMarker(newNode.isUnexploredPathMarker());
-		}
-	}
+//	private void updateMapNodeSensor(LowLevelGraphNode lowNode, SimPosition position){
+//		AgentNode node = getNodeFromPosition(position);
+//		//TODO
+//	}
 	
 	@Override
 	protected void scanForCommunication() {
@@ -92,20 +86,45 @@ public class SimpleAgent extends SimulationAgent{
 	@Override
 	protected void nextMove() throws InterruptedException {
 		SimPosition newPosition = lookAhead();
+		AgentNode newNode = null;
 		if(newPosition != null){
-			if(getNodeFromPosition(newPosition).isTraversable()){
-				currentPosition = newPosition;
-				System.out.println("New position for Agent " + id + ": " + currentPosition.getX() + ", " + currentPosition.getY());
+			newNode = getNodeFromPosition(newPosition);
+			if(newNode.isTraversable()){
+				if(newNode.checkIn(id)){
+					System.out.println("Agent " + id + " checked-in to Node: " + newNode.toString());
+					currentPosition = newPosition;
+					newNode.checkOut(id);
+					System.out.println("Agent " + id + " checked-out of Node: " + newNode.toString());
+					System.out.println("New position for Agent " + id + ": " + currentPosition.getX() + ", " + currentPosition.getY());
+					return;
+				}
+				else{
+					System.out.println("Agent " + id + " could not check-in to Node: " + newNode.toString());
+					handleOccupiedTarget();
+					return;
+				}
 			}
 		}
-		else{
-			turnRight();
-			Thread.sleep(1000);
-			nextMove();
-		}
+		handleWall();
 	}
 	
-	private SimPosition lookAhead(){
+	protected void handleWall() throws InterruptedException{
+		turnRight();
+	}
+	
+	protected void handleOccupiedTarget() throws InterruptedException{
+		//Wait for 2 turns then turn around
+		if(waitCounter < 2){
+			waitCounter++;
+			return;
+		}
+		waitCounter = 0;
+		turnRight();
+		turnRight();
+		nextMove();
+	}
+	
+	protected SimPosition lookAhead(){
 		SimPosition position = currentPosition;
 		int x = currentPosition.getX();
 		int y = currentPosition.getY();
@@ -126,7 +145,7 @@ public class SimpleAgent extends SimulationAgent{
 		return null;
 	}
 	
-	private void turnRight(){ 
+	protected void turnRight(){ 
 		System.out.println("Turning Right");
 		switch(facing){
 		case TOP : facing = FacingDirectionEnum.RIGHT;
@@ -144,17 +163,17 @@ public class SimpleAgent extends SimulationAgent{
 		System.out.println("Turning Right");
 	}
 	
-	private void turnLeft(){
-		switch(facing){
-		case TOP : facing = FacingDirectionEnum.LEFT;
-		break;
-		case RIGHT : facing = FacingDirectionEnum.BOTTOM;
-		break;
-		case BOTTOM : facing = FacingDirectionEnum.RIGHT;
-		break;
-		case LEFT : facing = FacingDirectionEnum.TOP;
-		}
-	}
+//	private void turnLeft(){
+//		switch(facing){
+//		case TOP : facing = FacingDirectionEnum.LEFT;
+//		break;
+//		case RIGHT : facing = FacingDirectionEnum.BOTTOM;
+//		break;
+//		case BOTTOM : facing = FacingDirectionEnum.RIGHT;
+//		break;
+//		case LEFT : facing = FacingDirectionEnum.TOP;
+//		}
+//	}
 	
 	public SimPosition getCurrentPosition(){
 		return currentPosition;
@@ -162,5 +181,12 @@ public class SimpleAgent extends SimulationAgent{
 	
 	public boolean isRunning() {
 		return running;
+	}
+
+	@Override
+	protected
+	void actionsAferMerge() {
+		// TODO Auto-generated method stub
+		
 	}
 }
