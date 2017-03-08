@@ -395,9 +395,11 @@ public class SimulationGUI extends Application implements IMapDataUpdate {
 	}
 
 	public void updateNodeColor() {
-		for (SimPosition position : scannedPositions) {
-			if (fullGraph.getLowLevelGraph().getLocatedGraph()[position.getX()][position.getY()].isTraversable()) {
-				nodeSquares[position.getX()][position.getY()].setFill(Color.WHITE);
+		synchronized (scannedPositions) {
+			for (SimPosition position : scannedPositions) {
+				if (fullGraph.getLowLevelGraph().getLocatedGraph()[position.getX()][position.getY()].isTraversable()) {
+					nodeSquares[position.getX()][position.getY()].setFill(Color.WHITE);
+				}
 			}
 		}
 	}
@@ -440,7 +442,9 @@ public class SimulationGUI extends Application implements IMapDataUpdate {
 				result.put(position,
 						fullGraph.getLowLevelGraph().getLocatedGraph()[translated.getX()][translated.getY()]);
 				if (!isScannedPosition(translated))
-					scannedPositions.add(translated);
+					synchronized (scannedPositions) {
+						scannedPositions.add(translated);
+					}
 			} else {
 				result.put(position, null);
 			}
@@ -449,10 +453,12 @@ public class SimulationGUI extends Application implements IMapDataUpdate {
 	}
 
 	public boolean isScannedPosition(SimPosition position) {
-		List<SimPosition> scanned = new ArrayList<>(scannedPositions);
-		for (SimPosition pos : scanned) {
-			if (pos.equals(position))
-				return true;
+		synchronized (scannedPositions) {
+			List<SimPosition> scanned = new ArrayList<>(scannedPositions);
+			for (SimPosition pos : scanned) {
+				if (pos.equals(position))
+					return true;
+			}
 		}
 		return false;
 	}
