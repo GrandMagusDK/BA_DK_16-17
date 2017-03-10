@@ -11,6 +11,7 @@ import gui.SimulationGUI;
 public class IntelligentAgent extends SimulationAgent {
 
 	private int waitCounter = 0;
+	private int CommunicationCoolDown = 5;
 	private boolean running = true;
 	private boolean movingToUnexploredPoint = false;
 	private List<AgentNode> pathToClosestUnknownPath = new ArrayList<>();
@@ -87,11 +88,16 @@ public class IntelligentAgent extends SimulationAgent {
 		SimPosition otherAgentPosition;
 		int x, y;
 		for (SimulationAgent otherAgent : agentsInRange) {
-			otherAgentPosition = otherAgent.getCurrentWorldCoord();
-			x = otherAgentPosition.getX() - getCurrentWorldCoord().getX();
-			y = otherAgentPosition.getY() - getCurrentWorldCoord().getY();
-			otherAgentPosition = new SimPosition(currentPosition.getX() + x, currentPosition.getY() + y);
-			mergeMap(otherAgent, otherAgentPosition);
+			if (recentAgentCommunication.containsKey(otherAgent.getId())) {
+				continue;
+			} else if(otherAgent.getOwnMap().size() > 20) {
+				recentAgentCommunication.put(otherAgent.getId(), CommunicationCoolDown);
+				otherAgentPosition = otherAgent.getCurrentWorldCoord();
+				x = otherAgentPosition.getX() - getCurrentWorldCoord().getX();
+				y = otherAgentPosition.getY() - getCurrentWorldCoord().getY();
+				otherAgentPosition = new SimPosition(currentPosition.getX() + x, currentPosition.getY() + y);
+				mergeMap(otherAgent, otherAgentPosition);
+			}
 		}
 	}
 

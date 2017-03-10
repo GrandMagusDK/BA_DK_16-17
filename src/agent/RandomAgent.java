@@ -5,8 +5,8 @@ import java.util.Random;
 import gui.SimulationGUI;
 
 public class RandomAgent extends SimpleAgent{
-	AgentNode currentNode;
-
+	private AgentNode currentNode;
+	
 	public RandomAgent(int id, SimPosition startPosition, FacingDirectionEnum facing, SimulationGUI simGUI) {
 		super(id, startPosition, facing, simGUI);
 		currentNode = getNodeFromPosition(currentPosition);

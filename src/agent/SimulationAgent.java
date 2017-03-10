@@ -1,9 +1,9 @@
 package agent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import graphGen.LowLevelGraphNode;
 import gui.SimulationGUI;
 import javafx.scene.shape.Rectangle;
@@ -28,6 +28,7 @@ public abstract class SimulationAgent implements Runnable{
 	protected List<SimPosition> scanPositions;
 	protected List<SimPosition> comPositions;
 	protected Map<SimPosition, LowLevelGraphNode> mapData;
+	protected Map<Integer, Integer> recentAgentCommunication = new HashMap<>();
 	protected List<SimulationAgent> agentsInRange;
 	protected List<SimPosition> knownMapPositions = new ArrayList<>();
 	protected boolean test = false;
@@ -198,6 +199,19 @@ public abstract class SimulationAgent implements Runnable{
 		for(AgentNode node : ownMap){
 			knownMapPositions.add(node.getPosition());
 		}
+	}
+	
+	protected void updateRecentAgentComms(){
+		List<Integer> keysToDelete = new ArrayList<>();
+		for(Map.Entry<Integer, Integer> entry : recentAgentCommunication.entrySet()){
+			entry.setValue(entry.getValue()-1);
+			if(entry.getValue() <= 0)
+				keysToDelete.add(entry.getKey());
+		}
+		for(int key : keysToDelete){
+			recentAgentCommunication.remove(key);
+		}
+		
 	}
 	
 	public AgentNode getNodeFromPosition(SimPosition position){
