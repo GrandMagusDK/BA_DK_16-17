@@ -5,7 +5,7 @@ import java.util.List;
 
 public class AgentNode {
 	private boolean traversable;
-	private boolean unexploredPathMarker;
+	private boolean unexplored;
 	private boolean intersection;
 	private boolean isOccupied = false;
 	private SimPosition worldPosition; //this is just for conveniance
@@ -20,7 +20,6 @@ public class AgentNode {
 	private int id;
 	private int numberOfAgentsOnOneSpace = 2;
 	private int numberOfAgents = 0;
-	private List<Integer> occupyingAgents = new ArrayList<>();
 	private static int counter = 0;
 	
 	public AgentNode(){
@@ -56,11 +55,11 @@ public class AgentNode {
 		if(numberOfAgents < numberOfAgentsOnOneSpace)
 			isOccupied = false;
 	}
-	public boolean isUnexploredPathMarker() {
-		return unexploredPathMarker;
+	public boolean isUnexplored() {
+		return unexplored;
 	}
-	public void setUnexploredPathMarker(boolean unexploredPathMarker) {
-		this.unexploredPathMarker = unexploredPathMarker;
+	public void setUnexplored(boolean unexploredPathMarker) {
+		this.unexplored = unexploredPathMarker;
 	}
 	public boolean isIntersection() {
 		return intersection;

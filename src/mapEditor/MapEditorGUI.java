@@ -229,7 +229,7 @@ public class MapEditorGUI extends Application {
 			}
 		});
 		
-		buttonConvert.setText("Convert to Graph");
+		buttonConvert.setText("Send to Simulation");
 		buttonConvert.setOnAction(new EventHandler<ActionEvent>() {
 
 			@Override

@@ -49,18 +49,16 @@ public class SimpleAgent extends SimulationAgent {
 		Set<SimPosition> positions = mapData.keySet();
 		List<SimPosition> newPositions = new ArrayList<>();
 		for (SimPosition position : positions) {
-			if (knownMapPositions.contains(position)) {
-				// TODO updateMapNodeSensor(mapData.get(position), position);
-			} else {
-				newPositions.add(position);
-			}
+			newPositions.add(position);
 		}
 		for (SimPosition pos : newPositions) {
 			AgentNode newNode = new AgentNode();
 			newNode.setPosition(pos);
 			newNode.setTraversable(mapData.get(pos).isTraversable());
-			newNode.setUnexploredPathMarker(true);
 			newNode.setIntersection(mapData.get(pos).isIntersection());
+			if (newNode.isTraversable()) {
+				newNode.setUnexplored(true);
+			}
 			ownMap.add(newNode);
 			knownMapPositions.add(pos);
 		}
@@ -74,18 +72,15 @@ public class SimpleAgent extends SimulationAgent {
 
 	@Override
 	protected void scanForCommunication() {
-		SimPosition otherAgentPosition;
-		int x, y;
+		SimPosition otherAgentPositionLocal;
 		for (SimulationAgent otherAgent : agentsInRange) {
 			if (recentAgentCommunication.containsKey(otherAgent.getId())) {
 				continue;
-			} else if(otherAgent.getOwnMap().size() > 20) {
+			} else if (otherAgent.getOwnMap().size() > 20) {
 				recentAgentCommunication.put(otherAgent.getId(), CommunicationCoolDown);
-				otherAgentPosition = otherAgent.getCurrentWorldCoord();
-				x = otherAgentPosition.getX() - getCurrentWorldCoord().getX();
-				y = otherAgentPosition.getY() - getCurrentWorldCoord().getY();
-				otherAgentPosition = new SimPosition(currentPosition.getX() + x, currentPosition.getY() + y);
-				mergeMap(otherAgent, otherAgentPosition);
+				otherAgentPositionLocal = otherAgent.getCurrentWorldCoord().minus(getCurrentWorldCoord());
+				otherAgentPositionLocal = otherAgentPositionLocal.plus(getCurrentPosition());
+				mergeMap(otherAgent, otherAgentPositionLocal);
 			}
 		}
 	}
@@ -97,13 +92,12 @@ public class SimpleAgent extends SimulationAgent {
 		if (newPosition != null) {
 			newNode = getNodeFromPosition(newPosition);
 			if (newNode.isTraversable()) {
+				//here check for unexplored
 				if (newNode.checkIn(id)) {
 					System.out.println("Agent " + id + " checked-in to Node: " + newNode.toString());
 					currentPosition = newPosition;
 					newNode.checkOut(id);
 					System.out.println("Agent " + id + " checked-out of Node: " + newNode.toString());
-					System.out.println("New position for Agent " + id + ": " + currentPosition.getX() + ", "
-							+ currentPosition.getY());
 					return;
 				} else {
 					System.out.println("Agent " + id + " could not check-in to Node: " + newNode.toString());

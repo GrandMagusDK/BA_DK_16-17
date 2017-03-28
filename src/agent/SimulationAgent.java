@@ -17,6 +17,7 @@ public abstract class SimulationAgent implements Runnable{
 	protected int moveDistance;
 	protected int currentSizeX;
 	protected int currentSizeY;
+	protected int status;
 	protected SimPosition currentPosition;
 	protected SimPosition coordsOfFirstOrigin; //This is the coords in own coords of the original spawn node.
 	protected SimPosition startPosition; //This is in world coordinates for conveniance.
@@ -31,8 +32,10 @@ public abstract class SimulationAgent implements Runnable{
 	protected Map<Integer, Integer> recentAgentCommunication = new HashMap<>();
 	protected List<SimulationAgent> agentsInRange;
 	protected List<SimPosition> knownMapPositions = new ArrayList<>();
+	protected List<AgentNode> exploredNodes = new ArrayList<>();
 	protected boolean test = false;
 	protected boolean modifyingMap = false;
+	protected boolean agentisDone = false;
 	protected SimulationGUI simGUI;
 	protected NewSimGUITest guiTest;
 	protected Rectangle simRectangle;
@@ -86,6 +89,7 @@ public abstract class SimulationAgent implements Runnable{
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		updateStatus();
 		backupMap = ownMap;
 	}
 	
@@ -109,8 +113,8 @@ public abstract class SimulationAgent implements Runnable{
 		List<AgentNode> newMap = new ArrayList<>();
 		List<AgentNode> oldMap = ownMap;
 		List<AgentNode> otherMap = otherAgent.getOwnMap();
-		//calc new Origin Varaiant: Know each others relative position. Also everytime they share map they first put their Origin in the upper left corner of their known map		
-		// otherAgentPosition - otherAgent.getCurrentPosition();
+		//otherAgentPosition is already in local coordinates		
+		// otherAgentPosition (in local coords) - otherAgent.getCurrentPosition (in his local coords) 
 		SimPosition otherOrigin = otherAgentPosition.minus(otherAgent.getCurrentPosition()); 
 		//translate all nodes from other map into our coords
 		for(AgentNode node : otherMap){
@@ -128,6 +132,7 @@ public abstract class SimulationAgent implements Runnable{
 		ownMap = newMap;
 		alignOrigin();
 		actionsAferMerge();
+		System.out.println("Merge for Agent " + id + " and Agent " + otherAgent.getId());
 		return newMap;
 	}
 	
@@ -169,36 +174,32 @@ public abstract class SimulationAgent implements Runnable{
 	
 	protected void alignOrigin(){
 		int minX = 0, minY = 0, maxX = 0, maxY = 0, newX, newY;
+		//looking for lowest x and y positions
 		for(AgentNode node : ownMap){
 			if(node.getPosition().getX() < minX)
 				minX = node.getPosition().getX();
-			if(node.getPosition().getX() < minY)
-				minY = node.getPosition().getX();
+			if(node.getPosition().getY() < minY)
+				minY = node.getPosition().getY();
 		}
+		//updating positions in MapNodes and rebuildingKnownPositions
+		SimPosition newPosition;
 		SimPosition newOrigin = new SimPosition(minX, minY);
+		List<SimPosition> newKnown = new ArrayList<>();
 		for(AgentNode node : ownMap){
 			newX = node.getPosition().getX() - minX;
 			newY = node.getPosition().getY() - minY;
-			node.getPosition().setX(newX);
-			node.getPosition().setY(newY);
+			newPosition = node.getPosition().minus(newOrigin);
+			node.setPosition(newPosition);
+			newKnown.add(newPosition);
 			if(newX > maxX)
 				maxX = newX;
 			if(newY > maxY);
 		}
-		currentPosition.setX(currentPosition.getX() - newOrigin.getX());
-		currentPosition.setY(currentPosition.getY() - newOrigin.getY());
-		coordsOfFirstOrigin.setX(coordsOfFirstOrigin.getX() - newOrigin.getX());
-		coordsOfFirstOrigin.setY(coordsOfFirstOrigin.getY() - newOrigin.getY());
+		currentPosition = currentPosition.minus(newOrigin);
+		coordsOfFirstOrigin = coordsOfFirstOrigin.minus(newOrigin);
 		currentSizeX = maxX;
 		currentSizeY = maxY;
-		rebuildKnownPositions();
-	}
-	
-	private void rebuildKnownPositions() {
-		knownMapPositions.clear();
-		for(AgentNode node : ownMap){
-			knownMapPositions.add(node.getPosition());
-		}
+		knownMapPositions = newKnown;
 	}
 	
 	protected void updateRecentAgentComms(){
@@ -212,6 +213,10 @@ public abstract class SimulationAgent implements Runnable{
 			recentAgentCommunication.remove(key);
 		}
 		
+	}
+	
+	protected void updateStatus(){
+		status = exploredNodes.size();
 	}
 	
 	public AgentNode getNodeFromPosition(SimPosition position){
@@ -319,4 +324,9 @@ public abstract class SimulationAgent implements Runnable{
 	public int getCommunicationRange() {
 		return communicationRange;
 	}
+	
+	public int getStatus() {
+		return status;
+	}
+
 }

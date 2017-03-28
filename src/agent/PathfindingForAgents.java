@@ -35,13 +35,17 @@ public class PathfindingForAgents {
 
 		while (!targetFound) {
 			int index = findNextNode(openSet);
+			if(index == -1){
+				path = null;
+				return path;
+			}
 			currentNode = openSet.get(index);
 			moveToClosedSet(currentNode);
 			findNeighbors(currentNode);
 			List<AgentNode> neighbors = currentNode.getNeighbors();
 			System.out.println("Current Node: " + currentNode.toString());
-			printCurrentPath(currentNode);
-			if (currentNode.equals(endNode)) {
+			//printCurrentPath(currentNode);
+			if (currentNode.getPosition().equals(endNode.getPosition())) {
 				targetFound = true;
 				System.out.println("End Node found");
 				break;
@@ -57,6 +61,10 @@ public class PathfindingForAgents {
 	}
 
 	private int findNextNode(List<AgentNode> openSet) {
+		if(openSet.isEmpty()){
+			System.out.println("Open set is empty");
+			return -1;
+		}
 		AgentNode current = openSet.get(0);
 		if (openSet.size() == 1) {
 			return openSet.indexOf(current);
@@ -65,8 +73,6 @@ public class PathfindingForAgents {
 			if (openSet.get(i).getfScore() <= current.getfScore() && openSet.get(i) != current) {
 				current = openSet.get(i);
 			}
-			// the <= means that later found nodes with the same score are
-			// preferred
 		}
 		return openSet.indexOf(current);
 	}
@@ -125,22 +131,21 @@ public class PathfindingForAgents {
 	private List<AgentNode> reconstructPath() {
 		List<AgentNode> path = new ArrayList<>();
 		AgentNode currentNode = endNode;
-		path.add(endNode);
 		int i = 0;
-		while (i < 1000) {
-			if (currentNode.getParent() == startNode) {
-				path.add(0, currentNode); // insert in the front to sort start
-											// to end.
+		System.out.println("Found path: ");
+		while (i < 250) {
+			if (currentNode == startNode) {
 				return path;
 			} else {
 				System.out.println(currentNode.toStringFull());
-				path.add(0, currentNode.getParent());
+				path.add(0, currentNode);
 				currentNode = currentNode.getParent();
 				if(currentNode == null)
 					break;
 			}
 			i++;
 		}
+		System.out.println("Left reconstruct loop, returning null for path.");
 		return null;
 	}
 
