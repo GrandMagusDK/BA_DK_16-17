@@ -79,7 +79,7 @@ public class NewSimGUITest extends Application implements IMapDataUpdate{
 		@Override
 		public void handle(long arg0) {
 			updateAgentPositions();
-			updateRecColor();
+			//updateRecColor();
 		}
 	}
 	
@@ -93,16 +93,16 @@ public class NewSimGUITest extends Application implements IMapDataUpdate{
 		gridPane.add(agentRec, position.getX(), position.getY());
 	}
 
-	private void updateRecColor(){
-		SimPosition translated;
-		for(SimPosition position: agent.getKnownMapPositions()){
-			translated = translateToWorld(position, agent);
-			if(agent.isKnownPosition(translated)){
-				if(lowNodes[translated.getX()][translated.getY()].isTraversable())
-					grid[translated.getX()][translated.getY()].setFill(Color.WHITE);
-			}
-		}
-	}
+//	private void updateRecColor(){
+//		SimPosition translated;
+//		for(SimPosition position: agent.getKnownMapPositions()){
+//			translated = translateToWorld(position, agent);
+//			if(agent.isKnownPosition(translated)){
+//				if(lowNodes[translated.getX()][translated.getY()].isTraversable())
+//					grid[translated.getX()][translated.getY()].setFill(Color.WHITE);
+//			}
+//		}
+//	}
 	
 	private Rectangle[][] buildGrid(GridPane grid){
 		Rectangle[][] recs = new Rectangle[size][size];

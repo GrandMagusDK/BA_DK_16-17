@@ -1,6 +1,7 @@
 package agent;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,7 @@ import gui.SimulationGUI;
 import javafx.scene.shape.Rectangle;
 import testStuff.NewSimGUITest;
 
-public abstract class SimulationAgent implements Runnable{
+public abstract class SimulationAgent implements Runnable {
 
 	protected int id;
 	protected int sensorRange;
@@ -17,30 +18,36 @@ public abstract class SimulationAgent implements Runnable{
 	protected int moveDistance;
 	protected int currentSizeX;
 	protected int currentSizeY;
-	protected int status;
-	protected SimPosition currentPosition;
-	protected SimPosition coordsOfFirstOrigin; //This is the coords in own coords of the original spawn node.
-	protected SimPosition startPosition; //This is in world coordinates for conveniance.
-	protected FacingDirectionEnum facing;
-	protected AgentNode startNode;
-	protected List<AgentNode> ownMap = new ArrayList<>();
-	protected List<AgentNode> backupMap = new ArrayList<>();
-	protected IMapDataUpdate updater;
-	protected List<SimPosition> scanPositions;
-	protected List<SimPosition> comPositions;
-	protected Map<SimPosition, LowLevelGraphNode> mapData;
-	protected Map<Integer, Integer> recentAgentCommunication = new HashMap<>();
-	protected List<SimulationAgent> agentsInRange;
-	protected List<SimPosition> knownMapPositions = new ArrayList<>();
-	protected List<AgentNode> exploredNodes = new ArrayList<>();
+	protected int[] status = new int[2];;
+	public int turnCounter = 0;
 	protected boolean test = false;
 	protected boolean modifyingMap = false;
-	protected boolean agentisDone = false;
+	protected boolean agentDone = false;
+	protected static String agentType;
+	protected SimPosition currentPosition;
+	protected SimPosition coordsOfFirstOrigin;
+	protected SimPosition startPosition;
+	protected SimPosition originTransformationVektor;
+	protected AgentNode currentNode;
+	protected AgentNode startNode;
+	protected FacingDirectionEnum facing;
+	protected List<AgentNode> ownMap = new ArrayList<>();
+	protected List<AgentNode> backupMap = new ArrayList<>();
+	protected List<SimPosition> scanPositions = new ArrayList<>();
+	protected List<SimPosition> comPositions = new ArrayList<>();
+	protected List<SimulationAgent> agentsInRange = new ArrayList<>();
+	protected List<AgentNode> exploredNodes = new ArrayList<>();
+	protected Map<Integer, Integer> recentAgentCommunication = new HashMap<>();
+	protected Map<SimPosition, LowLevelGraphNode> mapData;
+	protected IMapDataUpdate updater;
 	protected SimulationGUI simGUI;
 	protected NewSimGUITest guiTest;
 	protected Rectangle simRectangle;
-	
-	public SimulationAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange, int sensorRange, FacingDirectionEnum facing, SimulationGUI simGUI){
+	protected Date agentStartTime;
+	protected Date agentEndTime;
+
+	public SimulationAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange, int sensorRange,
+			FacingDirectionEnum facing, SimulationGUI simGUI) {
 		this.id = id;
 		this.sensorRange = sensorRange;
 		this.communicationRange = communicationRange;
@@ -51,8 +58,9 @@ public abstract class SimulationAgent implements Runnable{
 		this.simGUI = simGUI;
 		initialize();
 	}
-	
-	public SimulationAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange, int sensorRange, FacingDirectionEnum facing, boolean test){
+
+	public SimulationAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange, int sensorRange,
+			FacingDirectionEnum facing, boolean test) {
 		this.id = id;
 		this.sensorRange = sensorRange;
 		this.communicationRange = communicationRange;
@@ -63,22 +71,27 @@ public abstract class SimulationAgent implements Runnable{
 		this.test = true;
 		initialize();
 	}
-	
-	protected void initialize(){
+
+	protected void initialize() {
 		ownMap.add(startNode);
+		startNode.setUnexplored(false);
 		currentPosition = startNode.getPosition();
 		startNode.checkIn(id);
 		coordsOfFirstOrigin = new SimPosition(0, 0);
-		knownMapPositions.add(new SimPosition(0, 0));
 		backupMap = ownMap;
 	}
-	
-	protected void doTurn(){
+
+	protected abstract void timeOut(); 
+	protected void doTurn() {
+//		if (turnCounter == 500){
+//			agentIsDone(true);
+//			return;
+//		}
 		scanPositions = buildScanPositions();
 		getSimData();
 		modifyingMap = true;
 		scanSurroundings();
-		if(!checkOriginAlignment()){
+		if (!checkOriginAlignment()) {
 			alignOrigin();
 		}
 		scanForCommunication();
@@ -91,164 +104,206 @@ public abstract class SimulationAgent implements Runnable{
 		}
 		updateStatus();
 		backupMap = ownMap;
+		turnCounter++;
 	}
-	
-	protected void getSimData(){
-		if(test){
+
+	protected void getSimData() {
+		if (test) {
 			updater = guiTest;
-		}
-		else{
+		} else {
 			updater = simGUI;
 		}
 		mapData = updater.fetchMapData(this);
+		agentsInRange.clear();
 		agentsInRange = updater.fetchCommunicationData(this);
 	}
-	
-	protected abstract void scanSurroundings(); //aka what to do with the map information, like adding AgentNodes to the map
+
+	protected abstract void scanSurroundings(); // aka what to do with the map
+												// information, like adding
+												// AgentNodes to the map
 
 	protected abstract void scanForCommunication();
-	
-	protected List<AgentNode> mergeMap(SimulationAgent otherAgent, SimPosition otherAgentPosition){
-		//TODO
+
+	protected void mergeMap(SimulationAgent otherAgent, SimPosition otherAgentPosition) {
 		List<AgentNode> newMap = new ArrayList<>();
-		List<AgentNode> oldMap = ownMap;
-		List<AgentNode> otherMap = otherAgent.getOwnMap();
-		//otherAgentPosition is already in local coordinates		
-		// otherAgentPosition (in local coords) - otherAgent.getCurrentPosition (in his local coords) 
-		SimPosition otherOrigin = otherAgentPosition.minus(otherAgent.getCurrentPosition()); 
-		//translate all nodes from other map into our coords
-		for(AgentNode node : otherMap){
-			node.setPosition(otherOrigin.plus(node.getPosition()));
-		}
-		//merge the two lists:
-		for(AgentNode otherNode : otherMap){
-			for(AgentNode oldNode : oldMap){
-				if(otherNode.getPosition().equals(oldNode.getPosition())){
-					newMap.add(otherNode);
-				}
+		List<AgentNode> oldMap = copyMap(ownMap);
+		List<AgentNode> otherMap = copyMap(otherAgent.getOwnMap());
+		List<AgentNode> transformedMap;
+		// otherAgentPosition is already in local coordinates
+		// otherAgentPosition (in local coords) - otherAgent.getCurrentPosition
+		// (in his local coords)
+		SimPosition otherOrigin = otherAgentPosition.minus(otherAgent.getCurrentPosition());
+		// translate all nodes from other map into our coords
+		if (otherOrigin.getX() == 0 && otherOrigin.getY() == 0) {
+			System.out.println("Origins identical, skipping transformation");
+			transformedMap = otherMap;
+		} else {
+			transformedMap = new ArrayList<>();
+			for (AgentNode node : otherMap) {
+				AgentNode newNode = new AgentNode(node);
+				newNode.setPosition(otherOrigin.plus(newNode.getPosition()));
+				transformedMap.add(newNode);
 			}
 		}
-		newMap.addAll(oldMap);
-		ownMap = newMap;
-		alignOrigin();
-		actionsAferMerge();
+		// merge the two lists:
+		for (AgentNode otherNode : transformedMap) {
+			if(!isKnownPosition(otherNode.getPosition())){
+				newMap.add(otherNode);
+			}
+		}
+		oldMap.addAll(newMap);
+		ownMap = oldMap;
+		if (checkOriginAlignment()) {
+			alignOrigin();
+		}
+		rebuildKnownPositions();
 		System.out.println("Merge for Agent " + id + " and Agent " + otherAgent.getId());
-		return newMap;
 	}
 	
-	protected abstract void actionsAferMerge(); //allows custom actions after merging the map before the modifying flag gets lifted
+	protected void rebuildKnownPositions(){
+		List<SimPosition> rebuild = new ArrayList<>();
+		for(AgentNode node: ownMap){
+			if(node.isUnexplored())
+				rebuild.add(node.getPosition());
+		}
+	}
+
+	protected abstract void actionsAferOriginChange(); // allows custom actions after
+												// merging the map before the
+												// modifying flag gets lifted
 
 	protected abstract void nextMove() throws InterruptedException;
 
-	protected List<SimPosition> buildScanPositions(){
+	protected List<SimPosition> buildScanPositions() {
 		return rangeBuilder(sensorRange, currentPosition);
 	}
-	
-	private List<SimPosition> rangeBuilder(int range, SimPosition currentPosition){ //returns SimPos based on range in own Coords
+
+	private List<SimPosition> rangeBuilder(int range, SimPosition currentPosition) {
 		double distance;
 		List<SimPosition> result = new ArrayList<>();
-		
-		for(int i = -range; i <= range; i++){
-			for(int j = -range; j <= range; j++){
+
+		for (int i = -range; i <= range; i++) {
+			for (int j = -range; j <= range; j++) {
 				distance = Math.sqrt(Math.pow(i, 2) + Math.pow(j, 2));
-				if(distance <= range){
+				if (distance <= range) {
 					double x = i + currentPosition.getX();
 					double y = j + currentPosition.getY();
 					SimPosition newPosition = new SimPosition((int) x, (int) y);
-					if(!(i == 0 && j == 0))
+					if (!(i == 0 && j == 0))
 						result.add(newPosition);
 				}
 			}
 		}
 		return result;
 	}
-	
-	private boolean checkOriginAlignment(){
-		for(AgentNode node : ownMap){
-			if(node.getPosition().getX() < 0|| node.getPosition().getY() < 0){
+
+	private boolean checkOriginAlignment() {
+		for (AgentNode node : ownMap) {
+			if (node.getPosition().getX() < 0 || node.getPosition().getY() < 0) {
 				return false;
 			}
 		}
 		return true;
 	}
-	
-	protected void alignOrigin(){
+
+	protected void alignOrigin() {
 		int minX = 0, minY = 0, maxX = 0, maxY = 0, newX, newY;
-		//looking for lowest x and y positions
-		for(AgentNode node : ownMap){
-			if(node.getPosition().getX() < minX)
+		// looking for lowest x and y positions
+		for (AgentNode node : ownMap) {
+			if (node.getPosition().getX() < minX)
 				minX = node.getPosition().getX();
-			if(node.getPosition().getY() < minY)
+			if (node.getPosition().getY() < minY)
 				minY = node.getPosition().getY();
 		}
-		//updating positions in MapNodes and rebuildingKnownPositions
+		// updating positions in MapNodes and rebuildingKnownPositions
 		SimPosition newPosition;
 		SimPosition newOrigin = new SimPosition(minX, minY);
-		List<SimPosition> newKnown = new ArrayList<>();
+		originTransformationVektor = newOrigin;
 		for(AgentNode node : ownMap){
-			newX = node.getPosition().getX() - minX;
-			newY = node.getPosition().getY() - minY;
 			newPosition = node.getPosition().minus(newOrigin);
 			node.setPosition(newPosition);
-			newKnown.add(newPosition);
-			if(newX > maxX)
-				maxX = newX;
-			if(newY > maxY);
 		}
 		currentPosition = currentPosition.minus(newOrigin);
+		currentNode = getNodeFromPosition(currentPosition);
 		coordsOfFirstOrigin = coordsOfFirstOrigin.minus(newOrigin);
 		currentSizeX = maxX;
 		currentSizeY = maxY;
-		knownMapPositions = newKnown;
+		rebuildKnownPositions();
+		actionsAferOriginChange();
 	}
-	
-	protected void updateRecentAgentComms(){
+
+	protected void updateRecentAgentComms() {
 		List<Integer> keysToDelete = new ArrayList<>();
-		for(Map.Entry<Integer, Integer> entry : recentAgentCommunication.entrySet()){
-			entry.setValue(entry.getValue()-1);
-			if(entry.getValue() <= 0)
+		for (Map.Entry<Integer, Integer> entry : recentAgentCommunication.entrySet()) {
+			entry.setValue(entry.getValue() - 1);
+			if (entry.getValue() <= 0)
 				keysToDelete.add(entry.getKey());
 		}
-		for(int key : keysToDelete){
+		for (int key : keysToDelete) {
 			recentAgentCommunication.remove(key);
 		}
-		
+
 	}
-	
-	protected void updateStatus(){
-		status = exploredNodes.size();
+
+	protected void agentIsDone(boolean timeout) {
+		if (timeout) {
+			System.out.println("Agent cought in Loop and timed out");
+		} else {
+			System.out.println("All reachable Nodes discovered!");
+		}
+		System.out.println("Agent shutting down!");
+		agentEndTime = new Date();
+		agentDone = true;
+		return;
 	}
-	
-	public AgentNode getNodeFromPosition(SimPosition position){
-		AgentNode resultNode = null;
-		
+
+	protected void updateStatus() {
+		int counter = 0;
 		for(AgentNode node : ownMap){
-			if(node.getPosition().equals(position)){
+			if(node.isTraversable())
+				if(!node.isUnexplored())
+					counter++;
+		}
+		status[0] = counter;
+		status[1] = turnCounter;
+	}
+
+	public AgentNode getNodeFromPosition(SimPosition position) {
+		AgentNode resultNode = null;
+
+		for (AgentNode node : ownMap) {
+			if (node.getPosition().equals(position)) {
 				resultNode = node;
 				break;
 			}
 		}
 		return resultNode;
 	}
-	
-	public boolean isKnownPosition(SimPosition position){
-		for(SimPosition pos : knownMapPositions){
-			if(pos.equals(position))
+
+	public boolean isKnownPosition(SimPosition position) {
+		for (AgentNode node : ownMap) {
+			if (node.getPosition().equals(position))
 				return true;
 		}
 		return false;
 	}
-	
-	public boolean isKnownPosition(int x, int y){
-		for(SimPosition pos : knownMapPositions){
-			if( x == pos.getX() && y == pos.getY())
+
+	public boolean isKnownPosition(int x, int y) {
+		for (AgentNode node : ownMap) {
+			if (x == node.getPosition().getX() && y == node.getPosition().getY())
 				return true;
 		}
 		return false;
 	}
-	
-	public List<SimPosition> getKnownMapPositions() {
-		return knownMapPositions;
+
+	protected List<AgentNode> copyMap(List<AgentNode> map){
+		List<AgentNode> copy = new ArrayList<>();
+		AgentNode newNode;
+		for(AgentNode node: map){
+			newNode = new AgentNode(node);
+			copy.add(newNode);
+		}
+		return copy;
 	}
 	
 	public SimPosition getStartPosition() {
@@ -272,12 +327,12 @@ public abstract class SimulationAgent implements Runnable{
 	}
 
 	public List<AgentNode> getOwnMap() {
-		if(modifyingMap = true){
+		if (modifyingMap = true) {
 			return backupMap;
 		}
 		return ownMap;
 	}
-	
+
 	public List<SimPosition> getScanPositions() {
 		return scanPositions;
 	}
@@ -285,8 +340,8 @@ public abstract class SimulationAgent implements Runnable{
 	public List<SimPosition> getComPositions() {
 		return comPositions;
 	}
-	
-	public SimPosition getCurrentWorldCoord(){
+
+	public SimPosition getCurrentWorldCoord() {
 		int x = currentPosition.getX() - coordsOfFirstOrigin.getX() + startPosition.getX();
 		int y = currentPosition.getY() - coordsOfFirstOrigin.getY() + startPosition.getY();
 		SimPosition result = new SimPosition(x, y);
@@ -324,9 +379,28 @@ public abstract class SimulationAgent implements Runnable{
 	public int getCommunicationRange() {
 		return communicationRange;
 	}
-	
-	public int getStatus() {
+
+	public int[] getStatus() {
 		return status;
 	}
 
+	public boolean isAgentDone() {
+		return agentDone;
+	}
+
+	public Date getAgentEndTime() {
+		return agentEndTime;
+	}
+
+	public Date getAgentStartTime() {
+		return agentStartTime;
+	}
+
+	public String getAgentType() {
+		return agentType;
+	}
+
+	public int getTurnCounter() {
+		return turnCounter;
+	}
 }

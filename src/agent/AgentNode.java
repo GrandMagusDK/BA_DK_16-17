@@ -33,6 +33,16 @@ public class AgentNode {
 		counter++;
 	}
 	
+	public AgentNode(AgentNode node){
+		this.position = new SimPosition(node.getPosition().getX(), node.getPosition().getY());
+		this.traversable = node.traversable;
+		this.unexplored = node.unexplored;
+		this.worldPosition = new SimPosition(node.getPosition().getX(), node.getPosition().getY());
+		this.intersection = node.intersection;
+		id = counter;
+		counter++;
+	}
+	
 	public void clearValues() {
 		gScore = Integer.MAX_VALUE;
 		hScore = Integer.MAX_VALUE;

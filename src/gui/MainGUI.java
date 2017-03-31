@@ -4,8 +4,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-
-import graphGen.FullGraph;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -22,7 +20,7 @@ import mapEditor.MapEditorGUI;
 
 public class MainGUI extends Application{
 	
-	FullGraph loadedGraph;
+	//FullGraph loadedGraph;
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		
@@ -39,11 +37,12 @@ public class MainGUI extends Application{
 			public void handle(ActionEvent arg0) {
 				String name = loadGraphTextField.getText();
 				if(name != null){
-					loadGraph(name);
+					//loadGraph(name);
 					Platform.runLater(new Runnable() { //Opening MapEditorGUI class
 						public void run() {
 							try {
-								new SimulationGUI().start(new Stage(), loadedGraph);
+								//TODO
+								//new SimulationGUI().start(new Stage(), loadedGraph.getLowLevelGraph());
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -90,28 +89,28 @@ public class MainGUI extends Application{
 		primaryStage.show();
 	}
 	
-	private void loadGraph(String name){
-		FullGraph graph = null;
-		System.out.println("Loading Graph: " + name);
-		try {
-			FileInputStream fileIn = new FileInputStream(name + ".abg");
-			ObjectInputStream in = new ObjectInputStream(fileIn);
-			graph = (FullGraph) in.readObject();
-			in.close();
-			fileIn.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			System.out.println("Parse Error");
-			e.printStackTrace();
-		}
-		if(graph != null){
-			loadedGraph =  graph;
-		}
-		System.out.println("Finished Loading Graph");
-	}
+//	private void loadGraph(String name){
+//		FullGraph graph = null;
+//		System.out.println("Loading Graph: " + name);
+//		try {
+//			FileInputStream fileIn = new FileInputStream(name + ".abg");
+//			ObjectInputStream in = new ObjectInputStream(fileIn);
+//			graph = (FullGraph) in.readObject();
+//			in.close();
+//			fileIn.close();
+//		} catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} catch (ClassNotFoundException e) {
+//			System.out.println("Parse Error");
+//			e.printStackTrace();
+//		}
+//		if(graph != null){
+//			loadedGraph =  graph;
+//		}
+//		System.out.println("Finished Loading Graph");
+//	}
 	
 	public static void main(String[] args) {
 		launch(args);

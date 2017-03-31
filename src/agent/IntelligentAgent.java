@@ -1,6 +1,7 @@
 package agent;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,35 +12,41 @@ import gui.SimulationGUI;
 public class IntelligentAgent extends SimulationAgent {
 
 	private int waitCounter = 0;
-	private int CommunicationCoolDown = 5;
-	private boolean running = true;
+	private int CommunicationCoolDown = 10;
 	private boolean movingToUnexploredPoint = false;
 	private List<AgentNode> pathToClosestUnknownPath = new ArrayList<>();
 	private List<AgentNode> unknownPathNodes = new ArrayList<>();
 	private AgentNode tempIntraversable;
 
 	public IntelligentAgent(int id, SimPosition startPosition, FacingDirectionEnum facing, SimulationGUI simGUI) {
-		super(id, startPosition, 1, 4, 2, facing, simGUI);
+		super(id, startPosition, 1, 3, 2, facing, simGUI);
+		agentType = "Intelligent Agent";
 	}
 
 	public IntelligentAgent(int id, SimPosition startPosition, int moveDistance, int communicationRange,
 			int sensorRange, FacingDirectionEnum facing, boolean test) {
 		super(id, startPosition, moveDistance, communicationRange, sensorRange, facing, test);
+		agentType = "Intelligent Agent";
 	}
 
 	@Override
 	public void run() {
 		System.out.println("Intelligent Agent Thread running!");
-		while (running) {
+		agentStartTime = new Date();
+		while (!agentDone) {
 			doTurn();
 			try {
-				Thread.sleep(250); // actual value 250, lower for testing
+				Thread.sleep(30); // actual value 250, lower for testing
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-
+	@Override
+	protected void timeOut() {
+		//no used
+	}
+	
 	@Override
 	protected void scanSurroundings() {
 		List<SimPosition> keysToDelete = new ArrayList<>();
@@ -54,21 +61,22 @@ public class IntelligentAgent extends SimulationAgent {
 		Set<SimPosition> positions = mapData.keySet();
 		List<SimPosition> newPositions = new ArrayList<>();
 		for (SimPosition position : positions) {
-			if(!isKnownPosition(position))
+			if (!isKnownPosition(position))
 				newPositions.add(position);
 		}
 		for (SimPosition pos : newPositions) {
-			AgentNode newNode = new AgentNode();
-			newNode.setPosition(pos);
-			newNode.setTraversable(mapData.get(pos).isTraversable());
-			newNode.setIntersection(mapData.get(pos).isIntersection());
-			if (newNode.isTraversable()) {
-				newNode.setUnexplored(true);
-				if (!exploredNodes.contains(newNode))
-					unknownPathNodes.add(newNode);
+			if (!isKnownPosition(pos)) {
+				AgentNode newNode = new AgentNode();
+				newNode.setPosition(pos);
+				newNode.setTraversable(mapData.get(pos).isTraversable());
+				newNode.setIntersection(mapData.get(pos).isIntersection());
+				if (newNode.isTraversable()) {
+					newNode.setUnexplored(true);
+					if (!exploredNodes.contains(newNode))
+						unknownPathNodes.add(newNode);
+				}
+				ownMap.add(newNode);
 			}
-			ownMap.add(newNode);
-			knownMapPositions.add(pos);
 		}
 	}
 	// TODO maybe something only specific agent types can see
@@ -82,10 +90,14 @@ public class IntelligentAgent extends SimulationAgent {
 	@Override
 	protected void scanForCommunication() {
 		SimPosition otherAgentPositionLocal;
+		if (agentsInRange.isEmpty()) {
+			System.out.println("no agents in range");
+			return;
+		}
 		for (SimulationAgent otherAgent : agentsInRange) {
 			if (recentAgentCommunication.containsKey(otherAgent.getId())) {
 				continue;
-			} else if (otherAgent.getOwnMap().size() > 20) {
+			} else if (otherAgent.getOwnMap().size() > 50) {
 				recentAgentCommunication.put(otherAgent.getId(), CommunicationCoolDown);
 				otherAgentPositionLocal = otherAgent.getCurrentWorldCoord().minus(getCurrentWorldCoord());
 				otherAgentPositionLocal = otherAgentPositionLocal.plus(getCurrentPosition());
@@ -103,22 +115,26 @@ public class IntelligentAgent extends SimulationAgent {
 		}
 		// Normal movement if Node ahead is traversable and unexplored
 		SimPosition newPosition = lookAhead();
+		AgentNode nextNode;
 		if (newPosition != null) {
-			if (getNodeFromPosition(newPosition).isTraversable() && getNodeFromPosition(newPosition).isUnexplored()) {
+			nextNode = getNodeFromPosition(newPosition);
+			if (nextNode.isTraversable() && nextNode.isUnexplored()) {
 				moveTo(newPosition);
 				return;
 			}
 		}
-		// Hit a wall or Node ahead is already explored. Choose nearest unexploredPath
+		// Hit a wall or Node ahead is already explored. Choose nearest
+		// unexploredPath
 		double x, y, distance;
-		AgentNode nextNode = chooseNearestUnexploredNode();
+		nextNode = chooseNearestUnexploredNode();
 		if (nextNode == null) {
-			if (unknownPathNodes.isEmpty()) {
-				System.out.println("All reachable Nodes discovered! Map complete.");
-				System.out.println("Agent shutting down!");
-				running = false;
-				return;
-			}
+			agentIsDone(false);
+			return;
+		}
+		if (nextNode.getPosition().equals(currentPosition)) {
+			unknownPathNodes.remove(nextNode);
+			nextMove();
+			return;
 		}
 		System.out.println("Closest unexplored Node: x = " + nextNode.getPosition().getX() + ", y = "
 				+ nextNode.getPosition().getY());
@@ -141,17 +157,15 @@ public class IntelligentAgent extends SimulationAgent {
 		changeFacing(newPosition);
 		AgentNode currentNode = getNodeFromPosition(currentPosition);
 		if (currentNode.checkIn(id)) {
-			if (unknownPathNodes.contains(currentNode)) {
-				currentNode.setUnexplored(false);
+			currentNode.setUnexplored(false);
+			if (unknownPathNodes.contains(currentNode))
 				unknownPathNodes.remove(currentNode);
-			}
-			if (!exploredNodes.contains(currentNode)) {
+			if (!exploredNodes.contains(currentNode))
 				exploredNodes.add(getNodeFromPosition(currentPosition));
-			}
 			getNodeFromPosition(currentPosition).checkOut(id);
 			currentPosition = newPosition;
 			System.out.println(
-					"New position for Agent " + id + ": " + currentPosition.getX() + ", " + currentPosition.getY());
+					"[IA " + id + "] New position for Agent " + id + ": " + currentPosition.getX() + ", " + currentPosition.getY());
 			return;
 		}
 		System.out.println("Agent " + id + " could not check-in to Node: " + currentNode.toString());
@@ -166,7 +180,7 @@ public class IntelligentAgent extends SimulationAgent {
 			nextMove();
 		}
 		waitCounter = 0;
-		//temporarily mark that space as intraversable, then pathfind
+		// temporarily mark that space as intraversable, then pathfind
 		tempIntraversable = node;
 		tempIntraversable.setTraversable(false);
 		AgentNode newNode = chooseNearestUnexploredNode();
@@ -188,23 +202,38 @@ public class IntelligentAgent extends SimulationAgent {
 					tempIntraversable = null;
 				}
 			}
+		} else {
+			movingToUnexploredPoint = false;
 		}
 	}
 
 	private AgentNode chooseNearestUnexploredNode() {
 		AgentNode newNode = null;
 		double result = Integer.MAX_VALUE, x, y, distance;
-		for (AgentNode node : unknownPathNodes) {
-			if (node.isTraversable()) {
-				x = node.getPosition().getX() - currentPosition.getX();
-				y = node.getPosition().getY() - currentPosition.getY();
-				distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-				if (distance < result && distance != 0) {
-					result = distance;
-					newNode = node;
+		for (AgentNode node : ownMap) {
+			if (node.isUnexplored()) {
+				if (node.isTraversable()) {
+					x = node.getPosition().getX() - currentPosition.getX();
+					y = node.getPosition().getY() - currentPosition.getY();
+					distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+					if (distance < result && distance != 0) {
+						result = distance;
+						newNode = node;
+					}
 				}
 			}
 		}
+		// for (AgentNode node : unknownPathNodes) {
+		// if (node.isTraversable()) {
+		// x = node.getPosition().getX() - currentPosition.getX();
+		// y = node.getPosition().getY() - currentPosition.getY();
+		// distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+		// if (distance < result && distance != 0) {
+		// result = distance;
+		// newNode = node;
+		// }
+		// }
+		// }
 		return newNode;
 	}
 
@@ -251,7 +280,6 @@ public class IntelligentAgent extends SimulationAgent {
 		List<AgentNode> path = pathfinding.findPath(getNodeFromPosition(currentPosition), nextNode);
 		if (path == null) {
 			System.out.println("Returned path is NULL for Agent " + id);
-			findPathToUnExploredNode(nextNode);
 		} else
 			pathToClosestUnknownPath = path;
 	}
@@ -268,7 +296,7 @@ public class IntelligentAgent extends SimulationAgent {
 	}
 
 	@Override
-	protected void actionsAferMerge() {
+	protected void actionsAferOriginChange() {
 		rebuildUnExploredNodes();
 	}
 }

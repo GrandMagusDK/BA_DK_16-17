@@ -1,0 +1,6 @@
+test
+Size: 30 x 30
+Number of Agents: 2
+Map completed in: 5675.0ms.
+Agent 0, Type: Intelligent AgentStart Position: 29, 29, complete in: 8035.0ms, 266Turns;
+Agent 1, Type: Intelligent AgentStart Position: 0, 0, complete in: 8525.0ms, 282Turns;

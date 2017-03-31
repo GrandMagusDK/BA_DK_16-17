@@ -70,7 +70,7 @@ public class MapEditorGUI extends Application {
 					}
 				}
 				else{
-					showErrorAlert("Invalid Boundaries(1-50)");
+					showErrorAlert("Invalid Boundaries(10-100)");
 					return;
 				}
 			}
@@ -265,9 +265,11 @@ public class MapEditorGUI extends Application {
 	}
 	
 	private void chooseSquaresize(){
-		if(sizeY >= 30 || sizeX >= 50)
+		if(sizeY >= 30 || sizeX >= 30)
 			squareSize = 20;
-		if(sizeY >= 60)
+		if(sizeY >= 45 || sizeX >= 	45)
+			squareSize = 15;
+		if(sizeY >= 60|| sizeX >= 60)
 			squareSize = 10;
 	}
 
